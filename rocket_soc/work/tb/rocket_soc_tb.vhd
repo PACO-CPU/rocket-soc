@@ -28,7 +28,7 @@ architecture behavior of rocket_soc_tb is
   -- input/output signals:
   signal i_rst : std_logic := '1';
   signal i_sclk_p : std_logic;
-  signal i_sclk_n : std_logic;
+  signal i_sclk_n : std_logic; 
   signal i_clk_adc : std_logic := '0';
   signal i_int_clkrf : std_logic := '1';
   signal i_dip : std_logic_vector(3 downto 1);

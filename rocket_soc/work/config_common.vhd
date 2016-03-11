@@ -1,34 +1,34 @@
---! 
+--!
 --! @mainpage RISC-V System-on-Chip VHDL IP library
---! 
+--!
 --! @par Overview
---! The IP Library is an integrated set of reusable IP cores, designed for 
---! system-on-chip (SOC) development. The IP cores are centered around a 
---! common on-chip AMBA AXI system bus, and use a coherent method for 
+--! The IP Library is an integrated set of reusable IP cores, designed for
+--! system-on-chip (SOC) development. The IP cores are centered around a
+--! common on-chip AMBA AXI system bus, and use a coherent method for
 --! simulation and synthesis. This library is vendor independent, with support
---! for different CAD tools and target technologies. Inherited from gaisler 
---! GRLIB library plug&play method was further developed and used to configure 
+--! for different CAD tools and target technologies. Inherited from gaisler
+--! GRLIB library plug&play method was further developed and used to configure
 --! and connect the IP cores without the need to modify any global resources.
 --!
 --! @par Library organization
---! This repository is organized around VHDL libraries, where each major IP 
---! is assigned a unique library name. Using separate libraries avoids name 
---! clashes between IP cores and hides unnecessary implementation details 
---! from the end user. 
+--! This repository is organized around VHDL libraries, where each major IP
+--! is assigned a unique library name. Using separate libraries avoids name
+--! clashes between IP cores and hides unnecessary implementation details
+--! from the end user.
 --!
 --! @par Satellite Navigation support
---! Hardware part of the satellite navigation functionality is fully 
---! implemented inside of the <i>gnsslib</i> library. This library is the 
---! commercial product of GNSS Sensor limited and in this shared repository 
---! you can find only: modules declaration, configuration parameters and 
+--! Hardware part of the satellite navigation functionality is fully
+--! implemented inside of the <i>gnsslib</i> library. This library is the
+--! commercial product of GNSS Sensor limited and in this shared repository
+--! you can find only: modules declaration, configuration parameters and
 --! stub modules that provide enough functionality to use SOC as
 --! general purpose processor system based on RISC-V architecture.
 --! Netlists of the real GNSS IPs either as RF front-end for the FPGA
 --! development boards could be acquires via special request.
 --!
 --! @par Common Top-level structure
---! <img src="pics/soc_top.png" alt="Top Level"> 
---! 
+--! <img src="pics/soc_top.png" alt="Top Level">
+--!
 --! @par Features
 --!   <ul>
 --!     <li>Pre-generated single-core \e "Rocket-chip" core (RISC-V).
@@ -46,14 +46,14 @@
 --!     <li>Configuration parameters to enable/disable additional functionality,
 --!         like: <em><b>GNSS Engine</b>, <b>Viterbi decoder</b>, etc.</em></li>
 --!   </ul>
---! 
+--!
 --! @par Top-level simulation
 --! Use file <b>work/tb/rocket_soc.vhd</b> to run simulation scenario. You can
 --! get the following time diagram after simulation of 2 ms interval.
 --!
---! <img src="pics/soc_sim.png" alt="Simulating top"> 
+--! <img src="pics/soc_sim.png" alt="Simulating top">
 --!
---! @note Provided Firmware can detect RTL simulation target (see 
+--! @note Provided Firmware can detect RTL simulation target (see
 --!       <i>fw/boot/src/main.c</i> line 35) and can speed-up simulation
 --!       by removing some delay and changing some parameters (UART speed for
 --!       example).
@@ -65,10 +65,10 @@
 --!    <li>KC705 with Kintex7 FPGA using Vivado 2015.4.</li>
 --! </ul>
 --! @warning <em><b>Switch ON DIP[0] (i_int_clkrf) to enable test mode because
---!          you most probably doesn't have RF front-end. Otherwise there 
---!          wouldn't be generated interrupts and, as result, no UART 
+--!          you most probably doesn't have RF front-end. Otherwise there
+--!          wouldn't be generated interrupts and, as result, no UART
 --!          output.</b></em>.
---! 
+--!
 --! Information about GNSS (<em>Satellite Navigation Engine</em>) you can find at
 --! @link www.gnss-sensor.com.
 
@@ -94,38 +94,38 @@ package config_common is
 --!          from the SoC. Such configuration provides only Single-Core
 --!          mode.
 --! @warning There are bugs in the L2 implementation by this reason we've
---!          added this define to provide possibility of using "Rocket" 
+--!          added this define to provide possibility of using "Rocket"
 --!          core without \e "Uncore" module.
 --!          Probably these bugs will be fixed in the nearest future.
 constant CFG_COMMON_L1toL2_ENABLE : boolean := false;
 
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.
-constant CFG_SIM_BOOTROM_HEX : string := 
-              "E:/Projects/VHDLProjects/rocket/fw_images/bootimage.hex";
+constant CFG_SIM_BOOTROM_HEX : string :=
+              "/tmp/riscv-upstream/riscv_vhdl/rocket_soc/fw_images/bootimage.hex";
 
 --! @brief   HEX-image for the initialization of the FwImage ROM.
 --! @details This file is used by \e inferred ROM implementation.
-constant CFG_SIM_FWIMAGE_HEX : string := 
-                "E:/Projects/VHDLProjects/rocket/fw_images/fwimage.hex";
-                
+constant CFG_SIM_FWIMAGE_HEX : string :=
+                "/tmp/riscv-upstream/riscv_vhdl/rocket_soc/fw_images/fwimage.hex";
+
 
 --! @brief Disable/Enable usage of the <em><b>gnsslib library</b></em>.
 --!
 --! @details This \e  'gnsslib' is the property of the <em>"GNSS Sensor ltd"
---!          </em> (\link www.gnss-sensor.com \endlink) and it 
---!          implements a lot of Navigation related peripheries, like: 
+--!          </em> (\link www.gnss-sensor.com \endlink) and it
+--!          implements a lot of Navigation related peripheries, like:
 --!          <ul>
 --!              <li>Multi-system GNSS Engine;</li>
 --!              <li>Fast Search modules;</li>
 --!              <li>Viterbi decoders;</li>
 --!              <li>Self-test generators and so on.</li>
 --!          </ul>
---! @warning Disabling this define will tourn off source of the  msec 
+--! @warning Disabling this define will tourn off source of the  msec
 --!          interrupts that makes impossible default FW execution.
---!          Source of such interrupts is the gnssengine module (stub 
+--!          Source of such interrupts is the gnssengine module (stub
 --!          or full functional device).
-constant CFG_GNSSLIB_ENABLE : boolean := true;
+constant CFG_GNSSLIB_ENABLE : boolean := false;
 
 --! @brief Enable Fast Search Engine for the GPS signals.
 constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 0;
@@ -134,7 +134,7 @@ constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 0;
 --! @details By default MAC module enables support of the debug feature EDCL.
 constant CFG_ETHERNET_ENABLE : boolean := false;
 
---! @brief Enable/Disable Debug Unit 
+--! @brief Enable/Disable Debug Unit
 constant CFG_DSU_ENABLE : boolean := true;
 
 
