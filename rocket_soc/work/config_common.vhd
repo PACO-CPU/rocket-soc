@@ -102,12 +102,12 @@ constant CFG_COMMON_L1toL2_ENABLE : boolean := false;
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_BOOTROM_HEX : string :=
-              "/tmp/riscv-upstream/riscv_vhdl/rocket_soc/fw_images/bootimage.hex";
+              "../../fw_images/bootimage.hex";
 
 --! @brief   HEX-image for the initialization of the FwImage ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_FWIMAGE_HEX : string :=
-                "/tmp/riscv-upstream/riscv_vhdl/rocket_soc/fw_images/fwimage.hex";
+                "../../fw_images/fwimage.hex";
 
 
 --! @brief Disable/Enable usage of the <em><b>gnsslib library</b></em>.
