@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+
+import sys,tempfile,os,threading,serial,time
+import subprocess as sp
+from collections import namedtuple
+
+port="/dev/ttyUSB0"
+baud=9600
+fn_in=None
+fELF=False
+fHEX=False
+fBIN=False
+fInteractive=False
+
+def encode_u32(v):
+  return bytes([ (v>>(i*8))&0xff for i in range(4) ])
+
+def print_help(f=sys.stdout):
+  f.write(
+    "riscv-uart-flash [options] file\n"
+    "loads a program onto the FPGA and executes it.\n"
+    "options:\n"
+    "  -h|--help\n"
+    "    print this help and exit\n"
+    "  -elf|-hex|-bin\n"
+    "    sets the file format 'file' expected to be. Can only specify one.\n"
+    "  -p|--port port\n"
+    "    specify the UART port to use. default: /dev/ttyUSB0\n"
+    "  -b|--baud baud\n"
+    "    specify the baud rate to use. default: 9600\n"
+    "  -i|--interactive\n"
+    "    run interactively with the target UART after flushing has finished\n"
+    "    (this is not yet supported)\n")
+
+try:
+  s=None
+  for arg in sys.argv[1:]:
+    if s==None:
+      if arg[:1]=="-":
+        if arg in {"-elf"}: fELF=True
+        elif arg in {"-hex"}: fHEX=True
+        elif arg in {"-bin"}: fBIN=True
+        elif arg in {"-i","--interactive"}: fInteractive=True
+        elif arg in {"-p","--port"}: s="--port"
+        elif arg in {"-b","--baud"}: s="--baud"
+        elif arg in {"-h","--help"}:
+          print_help(sys.stdout)
+          sys.exit(0)
+        else:
+          raise Exception("unrecognized switch: %s"%arg)
+      else:
+        if fn_in!=None:
+          raise Exception("file already specified")
+        fn_in=arg
+    elif s=="--port":
+      port=arg
+      s=None
+    elif s=="--baud":
+      baud=int(arg)
+      s=None
+    
+
+  if fn_in==None:
+    raise Exception("no input specified")
+
+  if fELF+fHEX+fBIN>1:
+    raise Exception("cannot specify more than one of -elf, -hex, -bit")
+
+except Exception as e:
+  print_help(sys.stderr)
+  sys.stderr.write("%s\n"%e)
+  sys.exit(1);
+
+tempfiles=set()
+
+EVENT_UART=0
+EVENT_STDIN=1
+event_t=namedtuple("event_t","kind data")
+
+ev_mutex=threading.Lock()
+ev_cond=threading.Condition(ev_mutex)
+ev_queue=[]
+
+def ev_push(kind,data):
+  with ev_mutex:
+    ev_queue.append(event_t(kind,data))
+    ev_cond.notifyAll()
+
+def ev_pop():
+  with ev_mutex:
+    while len(ev_queue)<1:
+      ev_cond.wait()
+    ev=ev_queue[9]
+    ev_queue=ev_queue[1:]
+  return ev
+
+
+
+class UartListener(threading.Thread):
+  
+  def __init__(s,sock):
+    s._sock=sock
+    threading.Thread.__init__(s)
+
+  # todo: implement UART listener
+
+# todo: implement STDIN listener
+  
+def cleanup():
+  for fn in tempfiles:
+    if os.path.exists(fn): os.unlink(fn)
+
+def load_elf():
+  p=sp.Popen(
+    ["riscv64-unknown-elf-objcopy","-O","binary",fn_in],
+    stdout=sp.PIPE);
+  (raw,serr)=p.communicate()
+  if p.returncode!=0:
+    raise Exception("unable to create binary dump")
+  return raw
+
+def load_hex():
+  p=sp.Popen(
+    ["riscv64-unknown-elf-objcopy","-I","ihex","-O","binary",fn_in],
+    stdout=sp.PIPE);
+  (raw,serr)=p.communicate()
+  if p.returncode!=0:
+    raise Exception("unable to create binary dump")
+  return raw
+
+def load_bin():
+  with open(fn_in,"rb") as f:
+    raw=f.read()
+  return raw
+
+def run():
+  global fn_in
+  
+
+  (_,fe)=os.path.splitext(fn_in)
+  fe=fe.lower()
+  
+  if fELF: raw=load_elf()
+  elif fHEX: raw=load_hex()
+  elif fBIN: raw=load_bin()
+  elif fe in {".elf",""}: raw=load_elf()
+  elif fe in {".hex"}: raw=load_hex()
+  elif fe in {".bit",".bin"}: raw=load_bin()
+  else:
+    raise Exception("unrecognized input file")
+  
+  s=serial.Serial(port,baudrate=baud)
+
+  sys.stdout.write("writing %i bytes "%len(raw))
+  sys.stdout.flush()
+
+  s.write(encode_u32(len(raw)))
+  pbar="0...1...2...3...4...5...6...7...8...9...A"
+
+  chunk_size=len(raw)//len(pbar)
+
+  for i,letter in enumerate(pbar):
+    s.write(raw[i*chunk_size:i*chunk_size+1])
+    sys.stdout.write(letter)
+    sys.stdout.flush()
+
+  s.write(raw[len(pbar)*chunk_size:])
+  sys.stdout.write("\n")
+
+  if fInteractive:
+    sys.stdout.write("Entering interactive shell (CTRL+C to exit)\n")
+    sys.stdout.flush()
+
+    try:
+      
+      while True:
+        ev=ev_pop()
+        if ev.kind==EV_UART:
+          sys.stdout.write(ev.data)
+          sys.stdout.flush()
+        elif ev.kind==EV_STDIN:
+          s.write(ev.data.encode())
+    except KeyboardInterrupt:
+      pass
+
+
+try:
+  run()
+finally:
+  cleanup()
+
+
+
