@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
 
-import sys,tempfile,os,threading,serial,time
+## @package riscv-uart-flash
+# Tool for uploading and executing programs on the Rocket SoC via UART.
+#
+# This tool was written to speed up debugging as no other way of loading
+# software onto the SoC was available. 
+
+import sys,tempfile,os,threading,serial,time,re,binascii,traceback
 import subprocess as sp
 from collections import namedtuple
 
+# arguments
 port="/dev/ttyUSB0"
-baud=9600
+baud=115200
 fn_in=None
 fELF=False
 fHEX=False
 fBIN=False
 fInteractive=False
 
+# helper functions
 def encode_u32(v):
-  return bytes([ (v>>(i*8))&0xff for i in range(4) ])
+  r=bytes([ (v>>(i*8))&0xff for i in range(4) ])
+  return r
 
+
+## Prints usage information onto a specified file-like object
 def print_help(f=sys.stdout):
   f.write(
     "riscv-uart-flash [options] file\n"
@@ -25,13 +36,16 @@ def print_help(f=sys.stdout):
     "  -elf|-hex|-bin\n"
     "    sets the file format 'file' expected to be. Can only specify one.\n"
     "  -p|--port port\n"
-    "    specify the UART port to use. default: /dev/ttyUSB0\n"
+    "    specify the UART port to use. default: {port}\n"
     "  -b|--baud baud\n"
-    "    specify the baud rate to use. default: 9600\n"
+    "    specify the baud rate to use. default: {baud}\n"
     "  -i|--interactive\n"
     "    run interactively with the target UART after flushing has finished\n"
-    "    (this is not yet supported)\n")
+    "    (this is not yet supported)\n"
+    "".format(baud=baud,port=port))
 
+
+# Process command-line arguments
 try:
   s=None
   for arg in sys.argv[1:]:
@@ -71,8 +85,11 @@ except Exception as e:
   sys.stderr.write("%s\n"%e)
   sys.exit(1);
 
+# temporary files to be cleaned up when done
 tempfiles=set()
 
+# asynchronous i/o is performed on the UART and stdin.
+# events originating from those ports are synchronized with an event queue.
 EVENT_UART=0
 EVENT_STDIN=1
 event_t=namedtuple("event_t","kind data")
@@ -87,56 +104,95 @@ def ev_push(kind,data):
     ev_cond.notifyAll()
 
 def ev_pop():
+  global ev_queue
   with ev_mutex:
     while len(ev_queue)<1:
       ev_cond.wait()
-    ev=ev_queue[9]
+    ev=ev_queue[0]
     ev_queue=ev_queue[1:]
   return ev
 
+def ev_wait(kind,expr):
+  while True:
+    ev=ev_pop()
+    if ev.kind!=kind: continue
+    m=expr.match(ev.data)
+    if not m: continue
+    return ev,m
 
-
-class UartListener(threading.Thread):
+## Listens on a port (serial, file, etc) and generates an event for each line
+# read.
+class PortListener(threading.Thread):
   
-  def __init__(s,sock):
+  def __init__(s,sock,evkind):
     s._sock=sock
-    threading.Thread.__init__(s)
-
-  # todo: implement UART listener
-
-# todo: implement STDIN listener
+    s._evkind=evkind
+    threading.Thread.__init__(s,daemon=True)
   
+  def run(s):
+    for ln in s._sock:
+
+      data=""
+      while len(ln)>0:
+        try:
+          data=ln.decode()
+          break
+        except UnicodeDecodeError:
+          ln=ln[1:]
+      ev_push(s._evkind,data)
+      #sys.stdout.write("\x1b[32m%s\x1b[39m"%ln.decode())
+      #sys.stdout.flush()
+
+
+
+# clean up all temporary files generated
 def cleanup():
   for fn in tempfiles:
     if os.path.exists(fn): os.unlink(fn)
 
+# bitstream loading from an ELF file
 def load_elf():
+  (fd,fn)=tempfile.mkstemp()
+  print(fn)
+  tempfiles.add(fn)
   p=sp.Popen(
-    ["riscv64-unknown-elf-objcopy","-O","binary",fn_in],
+    ["riscv64-unknown-elf-objcopy","-O","binary",
+      fn_in,fn],
     stdout=sp.PIPE);
   (raw,serr)=p.communicate()
   if p.returncode!=0:
     raise Exception("unable to create binary dump")
+  with open(fn,"rb") as f:
+    raw=f.read()
   return raw
 
+# bitstream loading from a HEX file
 def load_hex():
+  (fd,fn)=tempfile.mkstemp()
+  print(fn)
+  tempfiles.add(fn)
   p=sp.Popen(
-    ["riscv64-unknown-elf-objcopy","-I","ihex","-O","binary",fn_in],
+    ["riscv64-unknown-elf-objcopy","-I","ihex","-O","binary",
+      fn_in,"/dev/stdout"],
     stdout=sp.PIPE);
   (raw,serr)=p.communicate()
   if p.returncode!=0:
     raise Exception("unable to create binary dump")
+  with open(fn,"rb") as f:
+    raw=f.read()
   return raw
 
+# bitstream loading from a BIN file
 def load_bin():
   with open(fn_in,"rb") as f:
     raw=f.read()
   return raw
 
+# main executable
 def run():
   global fn_in
   
-
+  # obtain bitstream
   (_,fe)=os.path.splitext(fn_in)
   fe=fe.lower()
   
@@ -148,25 +204,80 @@ def run():
   elif fe in {".bit",".bin"}: raw=load_bin()
   else:
     raise Exception("unrecognized input file")
-  
-  s=serial.Serial(port,baudrate=baud)
 
+  # reset the SoC. this is done by writing 0xdeadbeef with odd parity 
+  # ( OOB data )
+  sys.stdout.write("resetting the SoC .. ")
+  sys.stdout.flush()
+  s=serial.Serial(port,baudrate=baud,parity=serial.PARITY_ODD)
+  s.write(b"\xde\xad\xbe\xef")
+  s.close()
+ 
+  # write the program with even parity
+  s=serial.Serial(port,baudrate=baud,parity=serial.PARITY_EVEN)
+  
+  # also start port listeners so we see what's going on
+  uart_listener=PortListener(s,EVENT_UART)
+  uart_listener.start()
+  stdin_listener=PortListener(open(sys.stdin.fileno(),"rb"),EVENT_STDIN)
+  stdin_listener.start()
+
+  # wait until ready for booting
+  (ev,m)=ev_wait(
+    EVENT_UART,re.compile(r".*bootloader version ([0-9]+).*$",re.DOTALL))
+  bootloader_version=int(m.groups()[0])
+
+  (ev,m)=ev_wait(EVENT_UART,re.compile(r"Boot \(([^)]*)\).*$",re.DOTALL))
+  if m.groups()[0]!="uart ready":
+    if m.groups()[0]=="firmware":
+      raise Exception(
+        "ERROR: board set to boot from firmware. check DIP switches")
+    else:
+      raise Exception(
+        "ERROR: unexpected boot state: %s"%m.groups()[0])
+
+  sys.stdout.write(" done\nbootloader version: %i\n"%bootloader_version)
+  sys.stdout.flush()
+  
+  # debug
+  raw=b"affedead"
+  
+  crc=binascii.crc32(raw)
   sys.stdout.write("writing %i bytes "%len(raw))
   sys.stdout.flush()
 
   s.write(encode_u32(len(raw)))
-  pbar="0...1...2...3...4...5...6...7...8...9...A"
+  
+  (ev,m)=ev_wait(
+    EVENT_UART,re.compile("flashing ([0-9a-fA-F]{8}) bytes.*",re.DOTALL))
+  if int(m.groups()[0],16)!=len(raw):
+    raise Exception(
+      "invalid byte count fed back: %i (Expected %i)"
+      %(len(raw),int(m.groups()[0],16)))
+  
+  if True:
+    pbar="0...1...2...3...4...5...6...7...8...9...A"
+    chunk_size=len(raw)//len(pbar)
 
-  chunk_size=len(raw)//len(pbar)
+    for i,letter in enumerate(pbar):
+      s.write(raw[i*chunk_size:i*chunk_size+1])
+      sys.stdout.write(letter)
+      sys.stdout.flush()
 
-  for i,letter in enumerate(pbar):
-    s.write(raw[i*chunk_size:i*chunk_size+1])
-    sys.stdout.write(letter)
-    sys.stdout.flush()
+    s.write(raw[len(pbar)*chunk_size:])
+    sys.stdout.write("\n")
+  
+  if bootloader_version>=5:
+    (ev,m)=ev_wait(
+      EVENT_UART,re.compile("done. crc: ([0-9a-fA-F]{8}).*",re.DOTALL))
+    if int(m.groups()[0],16)!=crc:
+      raise Exception(
+        "CRC mismatch: %.8x (expected %.8x)"
+        %(crc,int(m.groups()[0],16)))
+  else:
+    (ev,m)=ev_wait(EVENT_UART,re.compile("done.*",re.DOTALL))
 
-  s.write(raw[len(pbar)*chunk_size:])
-  sys.stdout.write("\n")
-
+  # start interactive shell with uart and stdin
   if fInteractive:
     sys.stdout.write("Entering interactive shell (CTRL+C to exit)\n")
     sys.stdout.flush()
@@ -175,10 +286,10 @@ def run():
       
       while True:
         ev=ev_pop()
-        if ev.kind==EV_UART:
-          sys.stdout.write(ev.data)
+        if ev.kind==EVENT_UART:
+          sys.stdout.write("\x1b[36;1m%s\x1b[39;0m"%ev.data)
           sys.stdout.flush()
-        elif ev.kind==EV_STDIN:
+        elif ev.kind==EVENT_STDIN:
           s.write(ev.data.encode())
     except KeyboardInterrupt:
       pass
@@ -186,6 +297,10 @@ def run():
 
 try:
   run()
+except Exception as e:
+  sys.stdout.write("\n\x1b[31;1mERROR: %s\n\x1b[39;0m"%str(e))
+  sys.stdout.flush()
+  traceback.print_exc()
 finally:
   cleanup()
 
