@@ -4,8 +4,13 @@
 static uart_map *_uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
 
 #define UART_READ ({ \
-  while(_uart->status&UART_STATUS_RX_EMPTY); \
-  (char)_uart->data; \
+  uint32_t status; \
+  while(1) { \
+    status=_uart->status; \
+    if (!(status&UART_STATUS_RX_EMPTY)) break; \
+  } \
+  _uart->status=(char)((status>>16)&0xff); \
+  (char)((status>>24)&0xff); \
   })
 
 #define UART_WRITE(v) ({ \
@@ -14,6 +19,9 @@ static uart_map *_uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   _uart->data=v; \
   })
 
+void uart_init() {
+  _uart->scaler=304; // 115200 BAUD
+}
 
 void uart_waitln() {
   while (UART_READ!='\n');
