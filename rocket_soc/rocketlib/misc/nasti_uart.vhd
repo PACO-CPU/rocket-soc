@@ -31,7 +31,8 @@ entity nasti_uart is
     i_uart : in  uart_in_type;
     o_uart : out uart_out_type;
     i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type
+    o_axi  : out nasti_slave_out_type;
+    oob_reset : out std_logic
   );
 end; 
  
@@ -73,16 +74,23 @@ architecture arch_nasti_uart of nasti_uart is
         rx_data_cnt : integer range 0 to 7;
         rx_scaler_cnt : integer;
         rx_level : std_logic;
+        rx_seqn : std_logic_vector(7 downto 0);
 
         scaler : integer;
         err_parity : std_logic;
         err_stopbit : std_logic;
+        
+        reset_code_stage : integer range 0 to 3;
   end record;
 
   type registers is record
     bank_axi : nasti_slave_bank_type;
     bank0 : bank_type;
+    oob_reset : std_logic;
   end record;
+  
+  type reset_code_t is array(0 to 3) of std_logic_vector(7 downto 0);
+  constant reset_code: reset_code_t := (x"de",x"ad",x"be",x"ef");
 
 signal r, rin : registers;
 
@@ -91,7 +99,7 @@ begin
   comblogic : process(i_uart, i_axi, r)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
-    variable waddr_reg : local_addr_array_type;
+    variable waddr_reg : local_addr_array_type; 
     variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
@@ -223,8 +231,18 @@ begin
                xor t_rx(3) xor t_rx(2) xor t_rx(1) xor t_rx(0);
             if par = i_uart.rd then
                 v.bank0.err_parity := '0';
+                v.bank0.reset_code_stage := 0;
             else 
                 v.bank0.err_parity := '1';
+                if (r.bank0.rx_shift = reset_code(r.bank0.reset_code_stage)) then
+                    if r.bank0.reset_code_stage=3 then
+                        v.oob_reset := '1';
+                    else 
+                        v.bank0.reset_code_stage := r.bank0.reset_code_stage+1;
+                    end if;
+                else
+                    v.bank0.reset_code_stage := 0;
+                end if;
             end if;
             v.bank0.rx_state := stopbit;
         when stopbit =>
@@ -233,7 +251,7 @@ begin
             else
                 v.bank0.err_stopbit := '0';
             end if;
-            if rx_fifo_full = '0' then
+            if rx_fifo_full = '0' and v.bank0.err_parity = '0' then
                 v.bank0.rx_fifo(conv_integer(r.bank0.rx_wr_cnt)) := r.bank0.rx_shift;
                 v.bank0.rx_wr_cnt := r.bank0.rx_wr_cnt + 1;
             end if;
@@ -257,14 +275,14 @@ begin
        val := (others => '0');
        case raddr_reg(n) is
           when 0 => 
-                if rx_fifo_empty = '0' then
-                    val(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
-                    v.bank0.rx_rd_cnt := r.bank0.rx_rd_cnt + 1;
-                end if;
+              val(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
+              val(15 downto 8) := r.bank0.rx_seqn;
           when 1 => 
                 val(1 downto 0) := tx_fifo_empty & tx_fifo_full;
                 val(5 downto 4) := rx_fifo_empty & rx_fifo_full;
                 val(9 downto 8) := r.bank0.err_stopbit & r.bank0.err_parity;
+                val(23 downto 16) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt));
+                val(31 downto 24) := r.bank0.rx_seqn;
           when 2 => 
                 val := conv_std_logic_vector(r.bank0.scaler,32);
           when others => 
@@ -290,6 +308,11 @@ begin
                     if tx_fifo_full = '0' then
                         v.bank0.tx_fifo(conv_integer(r.bank0.tx_wr_cnt)) := val(7 downto 0);
                         v.bank0.tx_wr_cnt := r.bank0.tx_wr_cnt + 1;
+                    end if;
+             when 1 =>
+                    if val(7 downto 0) = r.bank0.rx_seqn then
+                        v.bank0.rx_seqn := r.bank0.rx_seqn+1;
+                        v.bank0.rx_rd_cnt := r.bank0.rx_rd_cnt + 1;
                     end if;
              when 2 => 
                     v.bank0.scaler     := conv_integer(val);
@@ -323,13 +346,19 @@ begin
         r.bank0.rx_scaler_cnt <= 0;
         r.bank0.rx_rd_cnt <= (others => '0');
         r.bank0.rx_wr_cnt <= (others => '0');
+        r.bank0.rx_seqn <= x"01";
 
-        r.bank0.scaler <= 0;
+        r.bank0.scaler <= 304; -- 115200 BAUD
         r.bank0.err_parity <= '0';
         r.bank0.err_stopbit <= '0';
+        
+        r.bank0.reset_code_stage <= 0;
+        r.oob_reset <= '0';
      elsif rising_edge(clk) then 
         r <= rin;
      end if; 
   end process;
+  
+  oob_reset <= r.oob_reset;
 
 end;
