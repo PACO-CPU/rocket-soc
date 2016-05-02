@@ -398,7 +398,7 @@ end generate;
     xindex   => CFG_NASTI_SLAVE_UART1,
     xaddr    => 16#80001#,
     xmask    => 16#FFFFF#,
-    fifosz   => 16,
+    fifosz   => 32,
     parity_bit => 1
   ) port map (
     nrst   => wNReset, 
