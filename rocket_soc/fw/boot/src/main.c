@@ -11,8 +11,62 @@
 #include "axi_maps.h"
 #include "encoding.h"
 
-#define BLOCK_SIZE 8
-#define VERSION_STRING "PACO Rocket SoC bootloader version 5\r\n",38
+#define BLOCK_SIZE 32
+#define VERSION_STRING "PACO Rocket SoC bootloader version 8\r\n",38
+
+/** \brief UART command. Does nothing
+  *
+  * This command constant was reserved in order to free the state machine from
+  * any unknown state by writing a number of zero bytes.
+  */
+#define CMD_NOP 0x00
+/** \brief UART command. Outputs '☃\r\n'.
+  *
+  * This is used as a synchronize with a host program.
+  */
+#define CMD_SYNC 0x10
+
+/** \brief UART command. Sets the address to write to next.
+  *
+  * To allow minimizing transmission errors, writing to sram occurs in blocks
+  * of fixed size and the starting address is set individually.
+  *
+  * After the address was read, it is printed onto the uart in 8-digit hex.
+  */
+#define CMD_BLOCK_ADDR  0x21
+/** \brief UART command. Writes one block of data from uart to sram.
+  *
+  * To allow minimizing transmission errors, writing to sram occurs in blocks
+  * of fixed size and the starting address is set individually.
+  *
+  * After the data was transferred, its CRC-32 is printed onto the uart in
+  * 8-digit hex.
+  */
+#define CMD_BLOCK_WRITE 0x22
+/** \brief UART command. Computes the CRC-32 of the current sram block.
+  *
+  * To allow minimizing transmission errors, writing to sram occurs in blocks
+  * of fixed size and the starting address is set individually.
+  *
+  */
+#define CMD_BLOCK_CRC   0x23
+/** \brief UART command. Yields control of the CPU thus commencing execution
+  * from sram.
+  */
+#define CMD_EXEC        0x42
+
+/** \brief UART command. Writes to the LED GPIOs
+  *
+  * Reads a single byte from the UART which is written to the LED status 
+  * register.
+  */
+#define CMD_LED         0x51
+/** \brief UART command. Reads the DIP switch state
+  *
+  * Writes back a single byte as 8-digit hex constituting the DIP switch status.
+  */
+#define CMD_DIP         0x52
+
 
 static uint32_t __crc32_lut[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -101,6 +155,12 @@ void read_uart(char *buf, int sz) {
     }
 }
 
+uint8_t read_uart_u8() {
+  uint8_t r;
+  read_uart(&r,sizeof(r));
+  return r;
+}
+
 void copy_image() { 
     uint32_t tech;
     uint64_t *fwrom = (uint64_t *)ADDR_NASTI_SLAVE_FWIMAGE;
@@ -135,57 +195,64 @@ static void _memclr(char *p,size_t n) {
   while(n--) *p++=0;
 }
 
-void load_uart_image() {
-    uint32_t sz_total;
-    size_t sz_block;
-    uint32_t offs=0;
-    char block[BLOCK_SIZE];
-    char *sram = (char*)ADDR_NASTI_SLAVE_SRAM;
-    uint32_t crc=0;
-    
-    static const char hexbuf[]="0123456789abcdef";
-    char s_cb[]="flashing xxxxxxxx bytes\r\n";
-    char s_crc[]="done. crc: xxxxxxxx\r\n";
-    led_set(0xff);
-    sz_total=0xdeadbeef;
-
-    read_uart((char*)&sz_total,sizeof(sz_total));
-    #define WHEX(buf,offs,val) \
-    { \
-      int i; \
-      for(i=0;i<8;i++) \
-        buf[offs-i]=hexbuf[((val)>>(i*4))&0xf]; \
-    }
-
-    WHEX(s_cb,16,sz_total)
-    print_uart(s_cb,25);
-
-    led_set(0x81);
-    while(sz_total>offs) {
-        sz_block=
-            ((sz_total-offs)>=BLOCK_SIZE)
-            ? BLOCK_SIZE
-            : sz_total;
-        _memclr(block+sz_block,BLOCK_SIZE-sz_block);
-        read_uart(block,sz_block);
-        crc=crc32(crc,block,sz_block);
-        memcpy(sram+offs, block, BLOCK_SIZE); 
-        offs+=sz_block;
-    }
-    led_set(0x8f);
-    
-    WHEX(s_crc,18,crc);
-    print_uart(s_crc,21);
-
-    #undef WHEX
-    
+void write_uart_hex(uint32_t v) {
+  char buf[]="xxxxxxxx\n";
+  static const char hexbuf[]="0123456789abcdef";
+  int i;
+  for(i=0;i<8;i++) buf[7-i]=hexbuf[(v>>(i*4))&0xf];
+  print_uart(buf,9);
 
 }
 
+void uart_shell() {
+  uint32_t cmd;
+  uint32_t ram_offset=0;
+  uint32_t crc;
+  int data;
+  int running;
+  char *sram=(char*)ADDR_NASTI_SLAVE_SRAM;
+  gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
+
+  running=1;
+  while(running) {
+    cmd=read_uart_u8();
+    switch(cmd) {
+      case CMD_NOP:
+        break;
+      case CMD_SYNC:
+        print_uart("\x1b[39;1m\xe2\x98\x83\x1b[30;0m]\n",6);
+        break;
+      case CMD_BLOCK_ADDR:
+        read_uart((char*)&ram_offset,sizeof(ram_offset));
+        write_uart_hex(ram_offset);
+        break;
+      case CMD_BLOCK_WRITE:
+        read_uart(sram+ram_offset,BLOCK_SIZE);
+        crc=crc32(0,sram+ram_offset,BLOCK_SIZE);
+        write_uart_hex(crc);
+        break;
+      case CMD_BLOCK_CRC:
+        crc=crc32(0,sram+ram_offset,BLOCK_SIZE);
+        write_uart_hex(crc);
+        break;
+      case CMD_EXEC:
+        running=0;
+        break;
+
+      case CMD_LED:
+        data=read_uart_u8();
+        led_set(data);
+        break;
+
+      case CMD_DIP:
+        write_uart_hex(gpio->dip);
+        break;
+    }
+  }
+}
 
 void _init() {
     uint32_t tech;
-    
 
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
@@ -197,16 +264,16 @@ void _init() {
     if (gpio->dip&0x02) {
       print_uart("Boot (firmware) ..",18);
       copy_image();
-      print_uart("OK\r\n",4);
+      print_uart("OK\n",4);
     } else {
-      print_uart("Boot (uart ready)\r\n",19);
-      load_uart_image();
+      print_uart("Boot (uart ready)\n",18);
+      uart_shell();
     }
 
     /** Check ADC detector that RF front-end is connected: */
     tech = (pnp->tech >> 24) & 0xff;
     if (tech != 0xFF) {
-        print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
+        print_uart("ADC clock not found. Enable DIP int_rf.\n", 40);
     }
 }
 
