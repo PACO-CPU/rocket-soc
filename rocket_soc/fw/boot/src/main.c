@@ -11,8 +11,8 @@
 #include "axi_maps.h"
 #include "encoding.h"
 
-#define BLOCK_SIZE 32
-#define VERSION_STRING "PACO Rocket SoC bootloader version 8\r\n",38
+#define BLOCK_SIZE 8
+#define VERSION_STRING "PACO Rocket SoC bootloader version 10\r\n",39
 
 /** \brief UART command. Does nothing
   *
@@ -220,7 +220,7 @@ void uart_shell() {
       case CMD_NOP:
         break;
       case CMD_SYNC:
-        print_uart("\x1b[39;1m\xe2\x98\x83\x1b[30;0m]\n",6);
+        print_uart("\x1b[39;1m\xe2\x98\x83\x1b[30;0m\n",18);
         break;
       case CMD_BLOCK_ADDR:
         read_uart((char*)&ram_offset,sizeof(ram_offset));
@@ -236,6 +236,7 @@ void uart_shell() {
         write_uart_hex(crc);
         break;
       case CMD_EXEC:
+        print_uart("init phase terminated\n",22);
         running=0;
         break;
 

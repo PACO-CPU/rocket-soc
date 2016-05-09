@@ -132,7 +132,7 @@ begin
         end if;
 
         if r.bank0.rx_state = idle and i_uart.rd = '1' then
-            v.bank0.rx_scaler_cnt := 0;
+            v.bank0.rx_scaler_cnt := r.bank0.scaler/2;
             v.bank0.rx_level := '1';
         elsif r.bank0.rx_scaler_cnt = (r.bank0.scaler-1) then
             v.bank0.rx_scaler_cnt := 0;
