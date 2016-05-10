@@ -223,6 +223,15 @@ def load_elf():
 
 # bitstream loading from a HEX file
 def load_hex():
+  
+  raw=b""
+  with open(options.keyvalues["fn_in"],"r") as f:
+    for ln in f:
+      ln=ln.strip()
+      raw+=bytes([ int(ln[i:i+2],16) for i in range(0,len(ln),2) ])
+
+  return raw
+
   (fd,fn)=tempfile.mkstemp()
   print(fn)
   tempfiles.add(fn)
@@ -399,7 +408,7 @@ def run():
               sync(nrep)
           
           block=raw[offs:offs+block_size]
-          block+=b"\x00"*(len(block)-block_size)
+          block+=b"\x00"*(block_size-len(block))
           crc=binascii.crc32(block)
           
           nrep=0
@@ -426,6 +435,14 @@ def run():
               
           offs+=block_size
           pb.increment(block_size)
+    sys.stdout.write("starting execution..")
+    sys.stdout.flush()
+    s.write(CMD_EXEC)
+    if "exec-confirm" in version.flags:
+      ev_wait(EVENT_UART,re.compile("init phase terminated.*",re.DOTALL))
+    sys.stdout.write(" done\n")
+    sys.stdout.flush()
+
 
   else:
     if options.keyvalues["fn_in"]!=None:

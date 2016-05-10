@@ -11,8 +11,8 @@
 #include "axi_maps.h"
 #include "encoding.h"
 
-#define BLOCK_SIZE 8
-#define VERSION_STRING "PACO Rocket SoC bootloader version 10\r\n",39
+#define BLOCK_SIZE 256
+#define VERSION_STRING "PACO Rocket SoC bootloader version 11\r\n",39
 
 /** \brief UART command. Does nothing
   *
