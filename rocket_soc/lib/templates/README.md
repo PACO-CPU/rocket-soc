@@ -42,3 +42,7 @@ change this by aupplying `UART=<path>` to the make command line, replacing
   make run UART=/dev/ttyUSB1
 ```
 
+
+Sometimes the flashing tool does not succeed in synchronizing the resetting
+process. In that case just restart the process, it should not occur very often.
+
