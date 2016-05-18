@@ -3,6 +3,8 @@
 CROSS_COMPILE?=$(RISCV)/bin/riscv64-unknown-elf-
 CLANG?=$(RISCV)/bin/clang
 
+UART?=/dev/ttyUSB0
+
 CFLAGS+= \
   -Iinclude \
   -I$(RISCV)/include \
@@ -20,7 +22,7 @@ TARGETS=main main.dump main.bin
 all: $(TARGETS)
 
 run: main.bin
-	riscv-uart-flash -i main.bin
+	riscv-uart-flash -i main.bin -p $(UART)
 
 main: main.o
 	$(CROSS_COMPILE)gcc $^ -o $@ $(LFLAGS)
