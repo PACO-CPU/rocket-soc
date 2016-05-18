@@ -40,7 +40,7 @@ def print_help(f=sys.stdout):
     "options:\n"
     "  -h|--help\n"
     "    print this help and exit\n"
-    "  -elf|-hex|-bin\n"
+    "  -elf|-bin\n"
     "    sets the file format 'file' expected to be. Can only specify one.\n"
     "  -p|--port port\n"
     "    specify the UART port to use. default: {port}\n"
@@ -68,7 +68,6 @@ try:
     if s==None:
       if arg[:1]=="-":
         if arg in {"-elf"}: options.flags.add("fELF")
-        elif arg in {"-hex"}: options.flags.add("fHEX")
         elif arg in {"-bin"}: options.flags.add("fBIN")
         elif arg in {"-i","--interactive"}: options.flags.add("interactive")
         elif arg in {"-p","--port"}: s="--port"
@@ -99,10 +98,9 @@ try:
 
   if (
     ("fELF" in options.flags)+
-    ("fHEX" in options.flags)+
     ("fBIN" in options.flags)
     )>1:
-    raise Exception("cannot specify more than one of -elf, -hex, -bit")
+    raise Exception("cannot specify more than one of -elf, -bit")
 
 except Exception as e:
   print_help(sys.stderr)
@@ -208,36 +206,10 @@ def cleanup():
 # bitstream loading from an ELF file
 def load_elf():
   (fd,fn)=tempfile.mkstemp()
-  print(fn)
   tempfiles.add(fn)
   p=sp.Popen(
     ["riscv64-unknown-elf-objcopy","-O","binary",
       options.keyvalues["fn_in"],fn],
-    stdout=sp.PIPE);
-  (raw,serr)=p.communicate()
-  if p.returncode!=0:
-    raise Exception("unable to create binary dump")
-  with open(fn,"rb") as f:
-    raw=f.read()
-  return raw
-
-# bitstream loading from a HEX file
-def load_hex():
-  
-  raw=b""
-  with open(options.keyvalues["fn_in"],"r") as f:
-    for ln in f:
-      ln=ln.strip()
-      raw+=bytes([ int(ln[i:i+2],16) for i in range(0,len(ln),2) ])
-
-  return raw
-
-  (fd,fn)=tempfile.mkstemp()
-  print(fn)
-  tempfiles.add(fn)
-  p=sp.Popen(
-    ["riscv64-unknown-elf-objcopy","-I","ihex","-O","binary",
-      options.keyvalues["fn_in"],"/dev/stdout"],
     stdout=sp.PIPE);
   (raw,serr)=p.communicate()
   if p.returncode!=0:
@@ -274,10 +246,8 @@ def run():
     fe=fe.lower()
     
     if "fELF" in options.flags: raw=load_elf()
-    elif "fHEX" in options.flags: raw=load_hex()
     elif "fBIN" in options.flags: raw=load_bin()
     elif fe in {".elf",""}: raw=load_elf()
-    elif fe in {".hex"}: raw=load_hex()
     elif fe in {".bit",".bin"}: raw=load_bin()
     else:
       raise Exception("unrecognized input file")
