@@ -28,7 +28,7 @@ main: main.o
 	$(CROSS_COMPILE)gcc $^ -o $@ $(LFLAGS)
 
 main.bin: main
-	$(CROSS_COMPILE)objcopy -O binary main > main.bin
+	$(CROSS_COMPILE)objcopy -O binary main main.bin
 
 main.dump: main
 	$(CROSS_COMPILE)objdump -D main > main.dump
