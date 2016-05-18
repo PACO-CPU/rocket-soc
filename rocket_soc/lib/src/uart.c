@@ -1,41 +1,44 @@
 #include <rocket/uart.h>
 #include <rocket/axi_maps.h>
 
-static uart_map *_uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
-
 #define UART_READ ({ \
   uint32_t status; \
   while(1) { \
-    status=_uart->status; \
+    status=uart->status; \
     if (!(status&UART_STATUS_RX_EMPTY)) break; \
   } \
-  _uart->status=(char)((status>>16)&0xff); \
-  (char)((status>>24)&0xff); \
+  uart->status=(char)((status>>24)&0xff); \
+  (char)((status>>16)&0xff); \
   })
 
 #define UART_WRITE(v) ({ \
   char _v=(v); \
-  while(_uart->status&UART_STATUS_RX_EMPTY); \
-  _uart->data=v; \
+  while(uart->status&UART_STATUS_TX_FULL); \
+  uart->data=_v; \
   })
 
 void uart_init() {
-  _uart->scaler=304; // 115200 BAUD
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
+  uart->scaler=304; // 115200 BAUD
 }
 
 void uart_waitln() {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   while (UART_READ!='\n');
 }
 
 void uart_write(const char *ptr, size_t cb) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   while(cb--) UART_WRITE(*ptr++);
 }
 
 void uart_read(char *ptr, size_t cb) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   while(cb--) *ptr++=UART_READ;
 }
 
 size_t uart_readln(char *ptr, size_t cb_max) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   int cr=0;
   size_t n=0;
   if (cb_max<1) return 0;
@@ -49,9 +52,11 @@ size_t uart_readln(char *ptr, size_t cb_max) {
   return n;
 }
 void uart_print(const char *ptr) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   while(*ptr!=0) UART_WRITE(*ptr++);
 }
 void uart_println(const char *ptr) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
   while(*ptr!=0) UART_WRITE(*ptr++);
   UART_WRITE('\n');
 }
