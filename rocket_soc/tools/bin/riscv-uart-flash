@@ -187,7 +187,9 @@ class PortListener(threading.Thread):
       data=""
       while len(ln)>0:
         try:
+          print("recv<")
           data=ln.decode()
+          print("%s>"%data)
           break
         except UnicodeDecodeError:
           ln=ln[1:]
@@ -251,7 +253,7 @@ def run():
     elif fe in {".bit",".bin"}: raw=load_bin()
     else:
       raise Exception("unrecognized input file")
-
+  
   # reset the SoC. this is done by writing 0xdeadbeef with odd parity 
   # ( OOB data )
   sys.stdout.write("resetting the SoC .. ")
@@ -275,9 +277,12 @@ def run():
   stdin_listener=PortListener(open(sys.stdin.fileno(),"rb"),EVENT_STDIN)
   stdin_listener.start()
 
+  if "sync-byte" in version.flags:
+    s.write(b"\xdd")
+  
   # wait until ready for booting
   (ev,m)=ev_wait(
-    EVENT_UART,re.compile(r".*bootloader version ([0-9]+).*$",re.DOTALL))
+    EVENT_UART,re.compile(r".*rsion ([0-9]+).*$",re.DOTALL))
   bootloader_version=int(m.groups()[0])
   
   if bootloader_version in version_data:
@@ -285,7 +290,6 @@ def run():
   else:
     version=default_version
   
-
   (ev,m)=ev_wait(EVENT_UART,re.compile(r"Boot \(([^)]*)\).*$",re.DOTALL))
   if m.groups()[0]!="uart ready":
     if m.groups()[0]=="firmware":

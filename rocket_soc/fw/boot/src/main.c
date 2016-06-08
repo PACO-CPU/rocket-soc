@@ -12,7 +12,7 @@
 #include "encoding.h"
 
 #define BLOCK_SIZE 256
-#define VERSION_STRING "PACO Rocket SoC bootloader version 11\r\n",39
+#define VERSION_STRING "PACO Rocket SoC bootloader version 12\r\n",39
 
 /** \brief UART command. Does nothing
   *
@@ -260,6 +260,11 @@ void _init() {
     gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     uart->scaler = 304;
+
+    // synchronize communication before sending a version string
+    if (gpio->dip&0x04) {
+      read_uart_u8();
+    }
     
     print_uart(VERSION_STRING);
     if (gpio->dip&0x02) {
