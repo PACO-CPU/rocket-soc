@@ -58,6 +58,11 @@ def print_help(f=sys.stdout):
     "    can be omitted.\n"
     "  -v|--verbose\n"
     "    output raw communication data\n"
+    "  --no-sync-byte\n"
+    "    by default the boot loader (starting at version 12) waits for a \n"
+    "    single byte to be received on the UART before any information is \n"
+    "    sent. The flashing tool sends such a byte unless this option is \n"
+    "    specified.\n"
     "".format(baud=options.keyvalues["baud"],port=options.keyvalues["port"]))
 
 
@@ -74,6 +79,7 @@ try:
         elif arg in {"-b","--baud"}: s="--baud"
         elif arg in {"--led-test"}: options.flags.add("led-test")
         elif arg in {"--sync"}: options.flags.add("sync")
+        elif arg in {"--no-sync-byte"}: options.flags.add("no-sync-byte")
         elif arg in {"-r","--reset"}: options.flags.add("reset")
         elif arg in {"-v","--verbose"}: options.flags.add("verbose")
         elif arg in {"-h","--help"}:
@@ -277,7 +283,7 @@ def run():
   stdin_listener=PortListener(open(sys.stdin.fileno(),"rb"),EVENT_STDIN)
   stdin_listener.start()
 
-  if "sync-byte" in version.flags:
+  if not "no-sync-byte" in options.flags:
     s.write(b"\xdd")
   
   # wait until ready for booting
@@ -285,6 +291,7 @@ def run():
     EVENT_UART,re.compile(r".*rsion ([0-9]+).*$",re.DOTALL))
   bootloader_version=int(m.groups()[0])
   
+
   if bootloader_version in version_data:
     version=version_data[bootloader_version]
   else:

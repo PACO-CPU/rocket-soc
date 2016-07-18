@@ -1,5 +1,5 @@
 
-RISCV?=../../riscv-tools
+RISCV?=../../../riscv-tools
 
 all:
 	echo $(RISCV)
