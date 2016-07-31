@@ -17,3 +17,7 @@ boot:
 	$(MKDIR) ./$(OBJ_DIR)
 	$(MKDIR) ./$(ELF_DIR)
 	make -f make_boot TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR) ELF_DIR=$(ELF_DIR) $@ $(TEA)
+
+install: boot
+	cp $(ELF_DIR)/bootimage.hex $(RISCV)/../rocket-soc/rocket_soc/fw_images/
+
