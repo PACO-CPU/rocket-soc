@@ -56,6 +56,9 @@ def print_help(f=sys.stdout):
     "  -r|--reset\n"
     "    reset the CPU before flashing (default). With this option file names\n"
     "    can be omitted.\n"
+    "  -w|--wait\n"
+    "    waits until the target program signifies termination by sending a \n"
+    "    three-byte sequence \0R\n, returning R as exit code. \n"
     "  -v|--verbose\n"
     "    output raw communication data\n"
     "  --no-sync-byte\n"
@@ -81,6 +84,7 @@ try:
         elif arg in {"--sync"}: options.flags.add("sync")
         elif arg in {"--no-sync-byte"}: options.flags.add("no-sync-byte")
         elif arg in {"-r","--reset"}: options.flags.add("reset")
+        elif arg in {"-w","--wait"}: options.flags.add("wait")
         elif arg in {"-v","--verbose"}: options.flags.add("verbose")
         elif arg in {"-h","--help"}:
           print_help(sys.stdout)
@@ -193,9 +197,7 @@ class PortListener(threading.Thread):
       data=""
       while len(ln)>0:
         try:
-          print("recv<")
           data=ln.decode()
-          print("%s>"%data)
           break
         except UnicodeDecodeError:
           ln=ln[1:]
@@ -480,7 +482,7 @@ def run():
             %(int(m.groups()[0],16),crc))
       else:
         (ev,m)=ev_wait(EVENT_UART,re.compile("done.*",re.DOTALL))
-  
+  exit_code=0 
   # start interactive shell with uart and stdin
   if "interactive" in options.flags:
     sys.stdout.write("Entering interactive shell (CTRL+C to exit)\n")
@@ -491,16 +493,36 @@ def run():
       while True:
         ev=ev_pop()
         if ev.kind==EVENT_UART:
-          sys.stdout.write("\x1b[36;1m%s\x1b[39;0m"%ev.data)
+          if len(ev.data)==3 and ev.data[0]=="\0" and ev.data[2]=="\n":
+            if "wait" in options.flags:
+              exit_code=ord(ev.data[1])
+              break
+          sys.stdout.write("\x1b[36;1m%s\x1b[39;0m"%(ev.data))
           sys.stdout.flush()
         elif ev.kind==EVENT_STDIN:
           s.write(ev.data.encode())
     except KeyboardInterrupt:
       pass
+  elif "wait" in options.flags:
+    sys.stdout.write("Waiting for program termination signal (CTRL+C to abort)\n")
+    sys.stdout.flush()
+
+    try:
+      
+      while True:
+        ev=ev_pop()
+        if ev.kind==EVENT_UART:
+          if len(ev.data)==3 and ev.data[0]=="\0" and ev.data[2]=="\n":
+            exit_code=ev.data[1]
+            break
+    except KeyboardInterrupt:
+      pass
+  return exit_code
 
 
+exit_code=0
 try:
-  run()
+  exit_code=run()
 except Exception as e:
   sys.stdout.write("\n\x1b[31;1mERROR: %s\n\x1b[39;0m"%str(e))
   sys.stdout.flush()
@@ -508,5 +530,5 @@ except Exception as e:
 finally:
   cleanup()
 
-
+sys.exit(exit_code)
 
