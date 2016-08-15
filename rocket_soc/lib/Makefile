@@ -3,6 +3,8 @@ RISCV?=../../riscv-tools
 
 CROSS_COMPILE?=$(RISCV)/bin/riscv64-unknown-elf-
 
+LIBDIR=lib
+
 CFLAGS+= \
   -Iinclude \
   -std=gnu99 -static -fno-common -fno-builtin-printf \
@@ -19,9 +21,12 @@ install: all
 	install $(TARGET_LIBS) $(RISCV)/lib/
 
 
-lib/librocket.a: $(LIBROCKET_OBJ)
+$(LIBDIR)/librocket.a: $(LIBROCKET_OBJ)
+	@mkdir -p lib
 	$(CROSS_COMPILE)ar -crv $@ $^
 
 %.o:%.c
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $^ -o $@ 
 
+clean:
+	rm -rf $(LIBROCKET_OBJ) $(LIBDIR)
