@@ -156,6 +156,7 @@ architecture arch_rocket_soc of rocket_soc is
   
   signal uart1i : uart_in_type;
   signal uart1o : uart_out_type;
+  signal uart1oob_reset : std_logic;
 
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
@@ -214,7 +215,7 @@ begin
     o_clk_adc   => wClkAdc,
     o_locked    => wPllLocked
   );
-  wSysReset <= ib_rst or not wPllLocked;
+  wSysReset <= ib_rst or uart1oob_reset or not wPllLocked;
 
   ------------------------------------
   --! @brief System Reset device instance.
@@ -397,8 +398,8 @@ end generate;
     xindex   => CFG_NASTI_SLAVE_UART1,
     xaddr    => 16#80001#,
     xmask    => 16#FFFFF#,
-    fifosz   => 16,
-    parity_bit => 0
+    fifosz   => 32,
+    parity_bit => 1
   ) port map (
     nrst   => wNReset, 
     clk    => wClkbus, 
@@ -406,7 +407,8 @@ end generate;
     i_uart => uart1i, 
     o_uart => uart1o,
     i_axi  => axisi,
-    o_axi  => axiso(CFG_NASTI_SLAVE_UART1)
+    o_axi  => axiso(CFG_NASTI_SLAVE_UART1),
+    oob_reset => uart1oob_reset
   );
   o_uart1_td  <= uart1o.td;
   o_uart1_rtsn <= not uart1o.rts;

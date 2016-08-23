@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/wagenerp/paco/paco-env/rocket-soc/rocket_soc/prj/ml605/rocket_soc_tb_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="attributes" />
+            <top_module name="config_common" />
+            <top_module name="config_target" />
+            <top_module name="gencomp" />
+            <top_module name="glbl" />
+            <top_module name="grethpkg" />
+            <top_module name="lut_package" />
+            <top_module name="numeric_std" />
+            <top_module name="rocket_soc_tb" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_misc" />
+            <top_module name="std_logic_signed" />
+            <top_module name="std_logic_textio" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="textio" />
+            <top_module name="types_amba4" />
+            <top_module name="types_buf" />
+            <top_module name="types_common" />
+            <top_module name="types_gnss" />
+            <top_module name="types_mem" />
+            <top_module name="types_pll" />
+            <top_module name="types_rocket" />
+            <top_module name="types_util" />
+            <top_module name="vcomponents" />
+            <top_module name="vital_primitives" />
+            <top_module name="vital_timing" />
+            <top_module name="vl_types" />
+            <top_module name="vpkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="46" />
+   <wvobject fp_name="/rocket_soc_tb/i_rst" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_rst</obj_property>
+      <obj_property name="ObjectShortName">i_rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_sclk_p" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_sclk_p</obj_property>
+      <obj_property name="ObjectShortName">i_sclk_p</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_sclk_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_sclk_n</obj_property>
+      <obj_property name="ObjectShortName">i_sclk_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_clk_adc" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_clk_adc</obj_property>
+      <obj_property name="ObjectShortName">i_clk_adc</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_int_clkrf" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_int_clkrf</obj_property>
+      <obj_property name="ObjectShortName">i_int_clkrf</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_dip" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">i_dip[3:1]</obj_property>
+      <obj_property name="ObjectShortName">i_dip[3:1]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_led" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">o_led[7:0]</obj_property>
+      <obj_property name="ObjectShortName">o_led[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_uart1_ctsn" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_uart1_ctsn</obj_property>
+      <obj_property name="ObjectShortName">i_uart1_ctsn</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_uart1_rd" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_uart1_rd</obj_property>
+      <obj_property name="ObjectShortName">i_uart1_rd</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_uart1_td" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_uart1_td</obj_property>
+      <obj_property name="ObjectShortName">o_uart1_td</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_uart1_rtsn" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_uart1_rtsn</obj_property>
+      <obj_property name="ObjectShortName">o_uart1_rtsn</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_gps_ld" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_gps_ld</obj_property>
+      <obj_property name="ObjectShortName">i_gps_ld</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_glo_ld" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_glo_ld</obj_property>
+      <obj_property name="ObjectShortName">i_glo_ld</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_max_sclk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_max_sclk</obj_property>
+      <obj_property name="ObjectShortName">o_max_sclk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_max_sdata" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_max_sdata</obj_property>
+      <obj_property name="ObjectShortName">o_max_sdata</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_max_ncs" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">o_max_ncs[1:0]</obj_property>
+      <obj_property name="ObjectShortName">o_max_ncs[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_antext_stat" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_antext_stat</obj_property>
+      <obj_property name="ObjectShortName">i_antext_stat</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/i_antext_detect" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_antext_detect</obj_property>
+      <obj_property name="ObjectShortName">i_antext_detect</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_antext_ena" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_antext_ena</obj_property>
+      <obj_property name="ObjectShortName">o_antext_ena</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/o_antint_contr" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_antint_contr</obj_property>
+      <obj_property name="ObjectShortName">o_antint_contr</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/adc_cnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">adc_cnt</obj_property>
+      <obj_property name="ObjectShortName">adc_cnt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/clk_cur" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clk_cur</obj_property>
+      <obj_property name="ObjectShortName">clk_cur</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/check_clk_bus" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">check_clk_bus</obj_property>
+      <obj_property name="ObjectShortName">check_clk_bus</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/iclkcnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">iclkcnt</obj_property>
+      <obj_property name="ObjectShortName">iclkcnt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/ierrcnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">ierrcnt</obj_property>
+      <obj_property name="ObjectShortName">ierrcnt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/ierrcheckedcnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">ierrcheckedcnt</obj_property>
+      <obj_property name="ObjectShortName">ierrcheckedcnt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/incr_time" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">incr_time</obj_property>
+      <obj_property name="ObjectShortName">incr_time</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ex_reg_pc" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">ex_reg_pc[39:0]</obj_property>
+      <obj_property name="ObjectShortName">ex_reg_pc[39:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#00ffff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ctrl_stalld" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ctrl_stalld</obj_property>
+      <obj_property name="ObjectShortName">ctrl_stalld</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ctrl_killd" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ctrl_killd</obj_property>
+      <obj_property name="ObjectShortName">ctrl_killd</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#00ffff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ctrl_killx" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ctrl_killx</obj_property>
+      <obj_property name="ObjectShortName">ctrl_killx</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ctrl_killm" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ctrl_killm</obj_property>
+      <obj_property name="ObjectShortName">ctrl_killm</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ex_reg_valid" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ex_reg_valid</obj_property>
+      <obj_property name="ObjectShortName">ex_reg_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/icache/io_cpu_req_valid" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">io_cpu_req_valid</obj_property>
+      <obj_property name="ObjectShortName">io_cpu_req_valid</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#00ffff</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/icache/io_cpu_req_bits_pc" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">io_cpu_req_bits_pc[39:0]</obj_property>
+      <obj_property name="ObjectShortName">io_cpu_req_bits_pc[39:0]</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+      <obj_property name="CustomSignalColor">#00ffff</obj_property>
+   </wvobject>
+   <wvobject fp_name="group48" type="group">
+      <obj_property name="label">wb_debug</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/wb_waddr" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">wb_waddr[4:0]</obj_property>
+         <obj_property name="ObjectShortName">wb_waddr[4:0]</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/rf_wdata" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">rf_wdata[63:0]</obj_property>
+         <obj_property name="ObjectShortName">rf_wdata[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ll_wen" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ll_wen</obj_property>
+         <obj_property name="ObjectShortName">ll_wen</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/replay_wb" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">replay_wb</obj_property>
+         <obj_property name="ObjectShortName">replay_wb</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/csr_io_csr_xcpt" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">csr_io_csr_xcpt</obj_property>
+         <obj_property name="ObjectShortName">csr_io_csr_xcpt</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/wb_ctrl_wxd" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">wb_ctrl_wxd</obj_property>
+         <obj_property name="ObjectShortName">wb_ctrl_wxd</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/wb_valid" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">wb_valid</obj_property>
+         <obj_property name="ObjectShortName">wb_valid</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/wb_wen" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">wb_wen</obj_property>
+         <obj_property name="ObjectShortName">wb_wen</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/rf_waddr" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">rf_waddr[4:0]</obj_property>
+         <obj_property name="ObjectShortName">rf_waddr[4:0]</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/rf_wdata" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">rf_wdata[63:0]</obj_property>
+         <obj_property name="ObjectShortName">rf_wdata[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/rf_wen" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">rf_wen</obj_property>
+         <obj_property name="ObjectShortName">rf_wen</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/wb_reg_valid" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">wb_reg_valid</obj_property>
+         <obj_property name="ObjectShortName">wb_reg_valid</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#ff00ff</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ex_xcpt" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ex_xcpt</obj_property>
+      <obj_property name="ObjectShortName">ex_xcpt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ex_cause" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">ex_cause[63:0]</obj_property>
+      <obj_property name="ObjectShortName">ex_cause[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/mem_xcpt" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mem_xcpt</obj_property>
+      <obj_property name="ObjectShortName">mem_xcpt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/wb_xcpt" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">wb_xcpt</obj_property>
+      <obj_property name="ObjectShortName">wb_xcpt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ex_ctrl_luts" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ex_ctrl_luts</obj_property>
+      <obj_property name="ObjectShortName">ex_ctrl_luts</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/ex_ctrl_lutl" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ex_ctrl_lutl</obj_property>
+      <obj_property name="ObjectShortName">ex_ctrl_lutl</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/take_pc_mem" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">take_pc_mem</obj_property>
+      <obj_property name="ObjectShortName">take_pc_mem</obj_property>
+   </wvobject>
+   <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/take_pc_wb" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">take_pc_wb</obj_property>
+      <obj_property name="ObjectShortName">take_pc_wb</obj_property>
+   </wvobject>
+   <wvobject fp_name="group40" type="group">
+      <obj_property name="label">lutcore</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/clk" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_rst_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_rst_i</obj_property>
+         <obj_property name="ObjectShortName">id_rst_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_stat_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_stat_i</obj_property>
+         <obj_property name="ObjectShortName">id_stat_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_exe_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_exe_i</obj_property>
+         <obj_property name="ObjectShortName">id_exe_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_cfg_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_cfg_i</obj_property>
+         <obj_property name="ObjectShortName">id_cfg_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data_i[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data_i[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data_i[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data_i[63:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data2_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data2_i[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data2_i[63:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data_o[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data_o[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/first_chain/cur_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">cur_data[0:2]</obj_property>
+         <obj_property name="ObjectShortName">cur_data[0:2]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/first_chain/last_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">last_data[0:2]</obj_property>
+         <obj_property name="ObjectShortName">last_data[0:2]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_we_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">data_we_i</obj_property>
+         <obj_property name="ObjectShortName">data_we_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/charm_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">charm_i</obj_property>
+         <obj_property name="ObjectShortName">charm_i</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/strange_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">strange_i[1:0]</obj_property>
+         <obj_property name="ObjectShortName">strange_i[1:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_valid_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">data_valid_o</obj_property>
+         <obj_property name="ObjectShortName">data_valid_o</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/status_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">status_o[63:0]</obj_property>
+         <obj_property name="ObjectShortName">status_o[63:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/error_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">error_o</obj_property>
+         <obj_property name="ObjectShortName">error_o</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group87" type="group">
+      <obj_property name="label">lutcore-inner</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/clk" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_rst_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_rst_i</obj_property>
+         <obj_property name="ObjectShortName">id_rst_i</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_stat_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_stat_i</obj_property>
+         <obj_property name="ObjectShortName">id_stat_i</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_exe_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_exe_i</obj_property>
+         <obj_property name="ObjectShortName">id_exe_i</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/id_cfg_i" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">id_cfg_i</obj_property>
+         <obj_property name="ObjectShortName">id_cfg_i</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data_i[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data_i[63:0]</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data2_i" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data2_i[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data2_i[63:0]</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">data_o[63:0]</obj_property>
+         <obj_property name="ObjectShortName">data_o[63:0]</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/data_valid_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">data_valid_o</obj_property>
+         <obj_property name="ObjectShortName">data_valid_o</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/status_o" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">status_o[63:0]</obj_property>
+         <obj_property name="ObjectShortName">status_o[63:0]</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+      <wvobject fp_name="/rocket_soc_tb/tt/l1tol2dis0/cpu0/inst_tile/core/lutcore/error_o" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">error_o</obj_property>
+         <obj_property name="ObjectShortName">error_o</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+         <obj_property name="CustomSignalColor">#00ffff</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>

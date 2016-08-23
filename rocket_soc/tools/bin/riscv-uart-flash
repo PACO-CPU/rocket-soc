@@ -1,0 +1,534 @@
+#!/usr/bin/env python3
+
+## @package riscv-uart-flash
+# Tool for uploading and executing programs on the Rocket SoC via UART.
+#
+# This tool was written to speed up debugging as no other way of loading
+# software onto the SoC was available. 
+
+import sys,tempfile,os,threading,serial,time,re,binascii,traceback
+import subprocess as sp
+from collections import namedtuple
+from math import ceil
+
+from paco import util
+from paco.bootloader import *
+
+# arguments
+
+
+
+options=version_t(
+  set(
+  ),{
+    "port":"/dev/ttyUSB0",
+    "baud":115200,
+    "fn_in":None
+  })
+
+# helper functions
+def encode_u32(v):
+  r=bytes([ (v>>(i*8))&0xff for i in range(4) ])
+  return r
+
+
+## Prints usage information onto a specified file-like object
+def print_help(f=sys.stdout):
+  f.write(
+    "riscv-uart-flash [options] file\n"
+    "loads a program onto the FPGA and executes it.\n"
+    "options:\n"
+    "  -h|--help\n"
+    "    print this help and exit\n"
+    "  -elf|-bin\n"
+    "    sets the file format 'file' expected to be. Can only specify one.\n"
+    "  -p|--port port\n"
+    "    specify the UART port to use. default: {port}\n"
+    "  -b|--baud baud\n"
+    "    specify the baud rate to use. default: {baud}\n"
+    "  --led-test\n"
+    "    flash the LEDs to test the UART link\n"
+    "  -i|--interactive\n"
+    "    run interactively with the target UART after flushing has finished\n"
+    "    (this is not yet supported)\n"
+    "  --sync\n"
+    "    synchronize with the target CPU before running the flash command\n"
+    "  -r|--reset\n"
+    "    reset the CPU before flashing (default). With this option file names\n"
+    "    can be omitted.\n"
+    "  -w|--wait\n"
+    "    waits until the target program signifies termination by sending a \n"
+    "    three-byte sequence \0R\n, returning R as exit code. \n"
+    "  -v|--verbose\n"
+    "    output raw communication data\n"
+    "  --no-sync-byte\n"
+    "    by default the boot loader (starting at version 12) waits for a \n"
+    "    single byte to be received on the UART before any information is \n"
+    "    sent. The flashing tool sends such a byte unless this option is \n"
+    "    specified.\n"
+    "".format(baud=options.keyvalues["baud"],port=options.keyvalues["port"]))
+
+
+# Process command-line arguments
+try:
+  s=None
+  for arg in sys.argv[1:]:
+    if s==None:
+      if arg[:1]=="-":
+        if arg in {"-elf"}: options.flags.add("fELF")
+        elif arg in {"-bin"}: options.flags.add("fBIN")
+        elif arg in {"-i","--interactive"}: options.flags.add("interactive")
+        elif arg in {"-p","--port"}: s="--port"
+        elif arg in {"-b","--baud"}: s="--baud"
+        elif arg in {"--led-test"}: options.flags.add("led-test")
+        elif arg in {"--sync"}: options.flags.add("sync")
+        elif arg in {"--no-sync-byte"}: options.flags.add("no-sync-byte")
+        elif arg in {"-r","--reset"}: options.flags.add("reset")
+        elif arg in {"-w","--wait"}: options.flags.add("wait")
+        elif arg in {"-v","--verbose"}: options.flags.add("verbose")
+        elif arg in {"-h","--help"}:
+          print_help(sys.stdout)
+          sys.exit(0)
+        else:
+          raise Exception("unrecognized switch: %s"%arg)
+      else:
+        if options.keyvalues["fn_in"]!=None:
+          raise Exception("file already specified")
+        options.keyvalues["fn_in"]=arg
+    elif s=="--port":
+      options.keyvalues["port"]=arg
+      s=None
+    elif s=="--baud":
+      options.keyvalues["baud"]=int(arg)
+      s=None
+    
+
+  if options.keyvalues["fn_in"]==None and not "reset" in options.flags:
+    raise Exception("no input specified")
+
+  if (
+    ("fELF" in options.flags)+
+    ("fBIN" in options.flags)
+    )>1:
+    raise Exception("cannot specify more than one of -elf, -bit")
+
+except Exception as e:
+  print_help(sys.stderr)
+  sys.stderr.write("%s\n"%e)
+  sys.exit(1);
+
+# temporary files to be cleaned up when done
+tempfiles=set()
+
+# asynchronous i/o is performed on the UART and stdin.
+# events originating from those ports are synchronized with an event queue.
+EVENT_UART=0
+EVENT_STDIN=1
+EVENT_TIMEOUT=2
+event_t=namedtuple("event_t","kind data")
+
+ev_mutex=threading.RLock()
+ev_cond=threading.Condition(ev_mutex)
+ev_queue=[]
+ev_timeout_code_high=1
+
+class TimeoutException(Exception): pass
+
+class TimeoutThread(threading.Thread):
+  def __init__(s,code,delay):
+    s._code=code
+    s._delay=delay
+    s._enabled=True
+    threading.Thread.__init__(s,daemon=True)
+
+  def abort(s):
+    with ev_mutex:
+      s._enabled=False
+
+  def run(s):
+    time.sleep(s._delay)
+    with ev_mutex:
+      if s._enabled:
+        ev_push(EVENT_TIMEOUT,s._code)
+
+def ev_push(kind,data):
+  with ev_mutex:
+    ev_queue.append(event_t(kind,data))
+    ev_cond.notifyAll()
+
+def ev_pop(timeout=None,timeout_details=""):
+  global ev_queue, ev_timeout_code_high
+  with ev_mutex:
+    if timeout!=None:
+      to=TimeoutThread(ev_timeout_code_high,timeout)
+      to.start()
+    
+    while len(ev_queue)<1:
+      ev_cond.wait()
+    if timeout!=None:
+      to.abort()
+
+    ev=ev_queue[0]
+    ev_queue=ev_queue[1:]
+    if ev.kind==EVENT_TIMEOUT:
+      raise TimeoutException("ev_pop timed out (%s)"%timeout_details)
+  return ev
+
+def ev_wait(kind,expr,timeout=None,timeout_details=""):
+  while True:
+    ev=ev_pop(timeout=timeout,timeout_details=timeout_details)
+    if ev.kind!=kind: continue
+    m=expr.match(ev.data)
+    if not m: continue
+    return ev,m
+
+## Listens on a port (serial, file, etc) and generates an event for each line
+# read.
+class PortListener(threading.Thread):
+  
+  def __init__(s,sock,evkind):
+    s._sock=sock
+    s._evkind=evkind
+    threading.Thread.__init__(s,daemon=True)
+  
+  def run(s):
+    for ln in s._sock:
+
+      data=""
+      while len(ln)>0:
+        try:
+          data=ln.decode()
+          break
+        except UnicodeDecodeError:
+          ln=ln[1:]
+      ev_push(s._evkind,data)
+      if "verbose" in options.flags:
+        sys.stdout.write("recv: \x1b[32m%s\x1b[39m"%ln.decode())
+        sys.stdout.flush()
+
+
+
+# clean up all temporary files generated
+def cleanup():
+  for fn in tempfiles:
+    if os.path.exists(fn): os.unlink(fn)
+
+# bitstream loading from an ELF file
+def load_elf():
+  (fd,fn)=tempfile.mkstemp()
+  tempfiles.add(fn)
+  p=sp.Popen(
+    ["riscv64-unknown-elf-objcopy","-O","binary",
+      options.keyvalues["fn_in"],fn],
+    stdout=sp.PIPE);
+  (raw,serr)=p.communicate()
+  if p.returncode!=0:
+    raise Exception("unable to create binary dump")
+  with open(fn,"rb") as f:
+    raw=f.read()
+  return raw
+
+# bitstream loading from a BIN file
+def load_bin():
+  with open(options.keyvalues["fn_in"],"rb") as f:
+    raw=f.read()
+  return raw
+
+# circularly cycles the LEDs on the board by one step.
+# used for indicating communication is still working
+def progress_indicator(s):
+  global _progress_indicator_state
+  try:
+    v=_progress_indicator_state
+  except NameError:
+    _progress_indicator_state=0
+  _progress_indicator_state=(_progress_indicator_state+1)%8
+  s.write(CMD_LED+bytes([1<<_progress_indicator_state]))
+  
+
+
+# main executable
+def run():
+  
+  if options.keyvalues["fn_in"]!=None:
+    # obtain bitstream
+    (_,fe)=os.path.splitext(options.keyvalues["fn_in"])
+    fe=fe.lower()
+    
+    if "fELF" in options.flags: raw=load_elf()
+    elif "fBIN" in options.flags: raw=load_bin()
+    elif fe in {".elf",""}: raw=load_elf()
+    elif fe in {".bit",".bin"}: raw=load_bin()
+    else:
+      raise Exception("unrecognized input file")
+  
+  # reset the SoC. this is done by writing 0xdeadbeef with odd parity 
+  # ( OOB data )
+  sys.stdout.write("resetting the SoC .. ")
+  sys.stdout.flush()
+  s=serial.Serial(
+    options.keyvalues["port"],
+    baudrate=options.keyvalues["baud"],
+    parity=serial.PARITY_ODD)
+  s.write(b"\xde\xad\xbe\xef")
+  s.close()
+ 
+  # write the program with even parity
+  s=serial.Serial(
+    options.keyvalues["port"],
+    baudrate=options.keyvalues["baud"],
+    parity=serial.PARITY_EVEN)
+  
+  # also start port listeners so we see what's going on
+  uart_listener=PortListener(s,EVENT_UART)
+  uart_listener.start()
+  stdin_listener=PortListener(open(sys.stdin.fileno(),"rb"),EVENT_STDIN)
+  stdin_listener.start()
+
+  if not "no-sync-byte" in options.flags:
+    s.write(b"\xdd")
+  
+  # wait until ready for booting
+  (ev,m)=ev_wait(
+    EVENT_UART,re.compile(r".*rsion ([0-9]+).*$",re.DOTALL))
+  bootloader_version=int(m.groups()[0])
+  
+
+  if bootloader_version in version_data:
+    version=version_data[bootloader_version]
+  else:
+    version=default_version
+  
+  (ev,m)=ev_wait(EVENT_UART,re.compile(r"Boot \(([^)]*)\).*$",re.DOTALL))
+  if m.groups()[0]!="uart ready":
+    if m.groups()[0]=="firmware":
+      raise Exception(
+        "ERROR: board set to boot from firmware. check DIP switches")
+    else:
+      raise Exception(
+        "ERROR: unexpected boot state: %s"%m.groups()[0])
+
+  sys.stdout.write(" done\nbootloader version: %i\n"%bootloader_version)
+  sys.stdout.flush()
+  
+  # debug
+  #raw=b"a"*200
+  
+  
+  
+  if "uart-shell" in version.flags:
+    if "sync" in options.flags:
+      print("syncing..")
+      s.write(CMD_SYNC)
+      ev_wait(EVENT_UART,re.compile(".*",re.DOTALL))
+      print("syncing..")
+      s.write(CMD_SYNC)
+      ev_wait(EVENT_UART,re.compile(".*",re.DOTALL))
+      print("syncing..")
+      s.write(CMD_SYNC)
+      ev_wait(EVENT_UART,re.compile(".*",re.DOTALL))
+
+    if "led-test" in options.flags:
+      print("flashing LEDs. use ctrl+C to stop")
+      try:
+        while True:
+          for i in range(8):
+            s.write(CMD_LED+bytes([1<<i]))
+            time.sleep(0.1)
+      except KeyboardInterrupt:
+        pass
+    if options.keyvalues["fn_in"]!=None:
+      sys.stdout.write("writing %i bytes "%len(raw))
+      sys.stdout.flush()
+      s.write(CMD_NOP*100);
+      # upload block-wise
+      def sync(severity=1):
+        #s.write(CMD_NOP*severity)
+        #time.sleep(0.1)
+        progress_indicator(s)
+        s.write(CMD_NOP*severity)
+        return
+        # synchronize with the CPU's uart shell state machine
+        while True:
+          print(CMD_SYNC)
+          #s.write(CMD_NOP*100)
+          try:
+            ev_wait(
+              EVENT_UART,re.compile(r"☃.*",re.DOTALL),
+              timeout=0.1,timeout_details="sync")
+            break
+          except TimeoutException:
+            sys.stderr.write("\x1b[33;1msync timeout\x1b[30;0m\n")
+            sys.stderr.flush()
+      
+      sync()
+
+      offs=0
+      block_size=version.keyvalues["block-size"]
+      with util.ProgressBar(0,len(raw)) as pb:
+        while offs<len(raw):
+          
+          nrep=0
+          while True:
+            s.write(CMD_BLOCK_ADDR+encode_u32(offs))
+            try:
+              (ev,m)=ev_wait(
+                EVENT_UART,re.compile(r"([0-9a-fA-F]{8}).*",re.DOTALL),
+                timeout=0.1,timeout_details="waddr")
+              offs_recv=int(m.groups()[0],16)
+              if offs!=offs_recv:
+                raise Exception(
+                  "offset mismatch: expected %i, got %i"%(offs,offs_recv))
+              break
+            except Exception as e:
+              nrep+=1
+              sys.stderr.write(
+                "\x1b[33;1m"
+                "error writing block address %i/%i (attempt %i): %s. retrying."
+                "\x1b[30;0m\n"
+                %(offs//block_size+1,ceil(len(raw)/block_size),nrep,str(e)))
+              sys.stderr.flush()
+              sync(nrep)
+          
+          block=raw[offs:offs+block_size]
+          block+=b"\x00"*(block_size-len(block))
+          crc=binascii.crc32(block)
+          
+          nrep=0
+          while True:
+            s.write(CMD_BLOCK_WRITE+block)
+            try:
+              (ev,m)=ev_wait(
+                EVENT_UART,re.compile(r"([0-9a-fA-F]{8}).*",re.DOTALL),
+                timeout=0.1,timeout_details="wdata")
+              crc_recv=int(m.groups()[0],16)
+              if crc!=crc_recv: 
+                raise Exception(
+                  "crc mismatch: expected %.8x, got %.8x"%(crc,crc_recv))
+              break
+            except Exception as e:
+              nrep+=1
+              sys.stderr.write(
+                "\x1b[33;1m"
+                "error writing block data %i/%i (attempt %i): %s. retrying."
+                "\x1b[30;0m\n"
+                %(offs//block_size+1,ceil(len(raw)/block_size),nrep,e))
+              sys.stderr.flush()
+              sync(nrep)
+              
+          offs+=block_size
+          pb.increment(block_size)
+    sys.stdout.write("starting execution..")
+    sys.stdout.flush()
+    s.write(CMD_EXEC)
+    if "exec-confirm" in version.flags:
+      ev_wait(EVENT_UART,re.compile("init phase terminated.*",re.DOTALL))
+    sys.stdout.write(" done\n")
+    sys.stdout.flush()
+
+
+  else:
+    if options.keyvalues["fn_in"]!=None:
+      # upload as a single stream
+      sys.stdout.write("writing %i bytes "%len(raw))
+      sys.stdout.flush()
+      crc=binascii.crc32(raw)
+      s.write(encode_u32(len(raw)))
+      
+      (ev,m)=ev_wait(
+        EVENT_UART,re.compile("flashing ([0-9a-fA-F]{8}) bytes.*",re.DOTALL))
+      if int(m.groups()[0],16)!=len(raw):
+        raise Exception(
+          "invalid byte count fed back: %i (Expected %i)"
+          %(int(m.groups()[0],16),len(raw)))
+      if "fast-stream-upload" in options.flags:
+        # upload in one go
+        time.sleep(0.1)
+        pbar="0...1...2...3...4...5...6...7...8...9...A"
+        chunk_size=len(raw)//len(pbar)
+        for i,letter in enumerate(pbar):
+          block=raw[i*chunk_size:(i+1)*chunk_size]
+          s.write(block)
+          time.sleep(0.01)
+          sys.stdout.write(letter)
+          sys.stdout.flush()
+        
+        block=raw[len(pbar)*chunk_size:]
+        s.write(block)
+        n_written+=len(block)
+        s.write(raw)
+        sys.stdout.write("\n")
+      else:
+        # upload one byte at a time
+        block_size=1
+        offs=0
+        if True:
+          while offs<len(raw):
+            block=raw[offs:offs+block_size]
+            offs+=block_size
+            s.write(block)
+            time.sleep(0.06)
+            sys.stdout.write(".")
+            sys.stdout.flush()
+        sys.stdout.write("\n")
+        s.write(raw+b"0"*400) # flush out of receiving
+
+      if "stream-crc" in version.flags:
+        (ev,m)=ev_wait(
+          EVENT_UART,re.compile("done. crc: ([0-9a-fA-F]{8}).*",re.DOTALL))
+        if int(m.groups()[0],16)!=crc:
+          raise Exception(
+            "CRC mismatch: %.8x (expected %.8x)"
+            %(int(m.groups()[0],16),crc))
+      else:
+        (ev,m)=ev_wait(EVENT_UART,re.compile("done.*",re.DOTALL))
+  exit_code=0 
+  # start interactive shell with uart and stdin
+  if "interactive" in options.flags:
+    sys.stdout.write("Entering interactive shell (CTRL+C to exit)\n")
+    sys.stdout.flush()
+
+    try:
+      
+      while True:
+        ev=ev_pop()
+        if ev.kind==EVENT_UART:
+          if len(ev.data)==3 and ev.data[0]=="\0" and ev.data[2]=="\n":
+            if "wait" in options.flags:
+              exit_code=ord(ev.data[1])
+              break
+          sys.stdout.write("\x1b[36;1m%s\x1b[39;0m"%(ev.data))
+          sys.stdout.flush()
+        elif ev.kind==EVENT_STDIN:
+          s.write(ev.data.encode())
+    except KeyboardInterrupt:
+      pass
+  elif "wait" in options.flags:
+    sys.stdout.write("Waiting for program termination signal (CTRL+C to abort)\n")
+    sys.stdout.flush()
+
+    try:
+      
+      while True:
+        ev=ev_pop()
+        if ev.kind==EVENT_UART:
+          if len(ev.data)==3 and ev.data[0]=="\0" and ev.data[2]=="\n":
+            exit_code=ev.data[1]
+            break
+    except KeyboardInterrupt:
+      pass
+  return exit_code
+
+
+exit_code=0
+try:
+  exit_code=run()
+except Exception as e:
+  sys.stdout.write("\n\x1b[31;1mERROR: %s\n\x1b[39;0m"%str(e))
+  sys.stdout.flush()
+  traceback.print_exc()
+finally:
+  cleanup()
+
+sys.exit(exit_code)
+

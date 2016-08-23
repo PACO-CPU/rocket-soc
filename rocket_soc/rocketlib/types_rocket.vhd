@@ -443,7 +443,8 @@ component nasti_uart is
     i_uart : in  uart_in_type;
     o_uart : out uart_out_type;
     i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type);
+    o_axi  : out nasti_slave_out_type;
+    oob_reset : out std_logic);
 end component;
 
 --! @brief   Interrupt controller with the AXI4 interface declaration.
