@@ -10,7 +10,7 @@ int main() { return main_(); }
 
 #define IMG_WIDTH 64
 #define IMG_HEIGHT 64
-#define IMG_RESULT_SIZE (IMG_WIDTH - 2) * (IMG_HEIGHT - 2)
+#define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
 
 #define LUTE(idx,arg) ({ \
   uint64_t op1=arg, rv1; \
@@ -27,8 +27,9 @@ int main() { return main_(); }
 
 #include "image/data0.h"
 
-/* Define constants as MACRO */
-
+uint64_t kernel[9] = {1, 3, 1,
+                      3, 9, 3,
+                      1, 3, 1,};
 
 int main_()
 {
@@ -39,6 +40,7 @@ int main_()
 
     int r;
     char buf[128];
+#ifdef LUT
     /* Horizontal */
     for (i = 1; i < IMG_WIDTH * IMG_HEIGHT; i++) {
         value1= image[i-1];
@@ -56,17 +58,35 @@ int main_()
             value2 = intermediate[(y  ) * IMG_WIDTH + x];
             value3 = intermediate[(y+1) * IMG_WIDTH + x];
             result = LUTE3(0, value1, value2, value3);
+            /* print single result to uart */
+            r=0;
+            r+=wruint64(buf+r,result);
+            uart_println(buf);
+
         }
 
     }
+#else
+    for (x = 1; x < IMG_WIDTH - 1; x++) {
+        for (y = 1; y < IMG_HEIGHT - 1; y++) {
+            result  = image[(y - 1) * IMG_WIDTH + (x - 1)] * kernel[0];
+            result += image[(y - 1) * IMG_WIDTH + (x    )] * kernel[1];
+            result += image[(y - 1) * IMG_WIDTH + (x + 1)] * kernel[2];
+            result += image[(y    ) * IMG_WIDTH + (x - 1)] * kernel[3];
+            result += image[(y    ) * IMG_WIDTH + (x    )] * kernel[4];
+            result += image[(y    ) * IMG_WIDTH + (x + 1)] * kernel[5];
+            result += image[(y + 1) * IMG_WIDTH + (x - 1)] * kernel[6];
+            result += image[(y + 1) * IMG_WIDTH + (x    )] * kernel[7];
+            result += image[(y + 1) * IMG_WIDTH + (x + 1)] * kernel[8];
 
-    r=0;
-    r+=wruint64(buf+r,result);
-    uart_println(buf);
-
-    uart_readln(buf,sizeof(buf));
-    uart_println(buf);
-
+            result /= 25;
+            /* print single result to uart */
+            r=0;
+            r+=wruint64(buf+r,result);
+            uart_println(buf);
+        }
+    }
+#endif
     return 0;
 }
 
