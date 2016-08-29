@@ -7,6 +7,7 @@ CXX?=clang++
 CC?=$(GCC)
 
 UART?=/dev/ttyUSB0
+RESULT_IMG=result.png
 
 CFLAGS+= \
   -Iinclude \
@@ -39,10 +40,11 @@ S_FILES=lut-startup.s $(patsubst %.c,%.s,$(SRC))
 all: $(TARGETS)
 
 run: main.bin
-	riscv-uart-flash -i main.bin -p $(UART) > result.h
-	sed -i '1,7d' result.h
-	sed -i 's/\^\[\[[0-9][0-9];0m\^\[\[[0-9][0-9];1m//g' result.h
-	sed -i '$ d' result.h
+	riscv-uart-flash -w -i main.bin -p $(UART) > result.h
+	sed -i '1,6d' result.h
+	sed -r -i "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" result.h
+	./img_raw_converter.py --image -i result.h -o $(RESULT_IMG)
+	rm -f result.h
 
 main: $(S_FILES)
 	$(GCC) $^ -lm -o $@ $(LFLAGS)
@@ -68,4 +70,4 @@ $(RAW_IMG_DATA): $(IMG_FILE)
 	./img_raw_converter.py --raw -i $< -o $@
 
 clean:
-	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUT_CONFIG_FILES) $(RAW_IMG_DATA)
+	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUT_CONFIG_FILES) $(RAW_IMG_DATA) $(RESULT_IMG)

@@ -7,7 +7,7 @@
 // use a wrapper, as such:
 int main_();
 int main() { return main_(); }
-
+//#define LUT
 #define IMG_WIDTH 64
 #define IMG_HEIGHT 64
 #define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
@@ -27,9 +27,30 @@ int main() { return main_(); }
 
 #include "image/data0.h"
 
+
 uint64_t kernel[9] = {1, 3, 1,
                       3, 9, 3,
                       1, 3, 1,};
+
+void write_raw_image_header()
+{
+    char buf[64];
+    int r = 0;
+
+    r += wrstring(buf + r, "//(");
+#ifdef LUT
+    r += wruint64(buf + r, IMG_WIDTH-2);
+    r += wrstring(buf + r, ",");
+    r += wruint64(buf + r, IMG_HEIGHT);
+#else
+    r += wruint64(buf + r, IMG_WIDTH-2);
+    r += wrstring(buf + r, ",");
+    r += wruint64(buf + r, IMG_HEIGHT-2);
+#endif
+    r += wrstring(buf + r, ")\nuint64_t img[] = {");
+    
+    uart_println(buf);
+}
 
 int main_()
 {
@@ -40,6 +61,7 @@ int main_()
 
     int r;
     char buf[128];
+    write_raw_image_header(); 
 #ifdef LUT
     /* Horizontal */
     for (i = 1; i < IMG_WIDTH * IMG_HEIGHT; i++) {
@@ -61,11 +83,15 @@ int main_()
             /* print single result to uart */
             r=0;
             r+=wruint64(buf+r,result);
+            r+=wrstring(buf+r,",");
             uart_println(buf);
 
         }
 
     }
+    r = 0;
+    r += wrstring(buf + r, "};");
+    uart_println(buf);
 #else
     for (x = 1; x < IMG_WIDTH - 1; x++) {
         for (y = 1; y < IMG_HEIGHT - 1; y++) {
@@ -83,10 +109,12 @@ int main_()
             /* print single result to uart */
             r=0;
             r+=wruint64(buf+r,result);
+            r+=wrstring(buf+r,",");
             uart_println(buf);
         }
     }
 #endif
+    uart_exit(0);
     return 0;
 }
 
