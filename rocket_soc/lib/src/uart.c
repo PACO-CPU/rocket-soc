@@ -61,3 +61,14 @@ void uart_println(const char *ptr) {
   UART_WRITE('\n');
 }
 
+void uart_exit(int status)
+{
+    char buf[3];
+    
+    buf[0] = 0;
+    buf[1] = status & 0xff;
+    buf[2] = '\n';
+
+    uart_write(buf, 3);
+    return;
+}

@@ -68,6 +68,8 @@ void uart_print(const char *ptr);
   */
 void uart_println(const char *ptr);
 
+void uart_exit(int status);
+
 #ifdef __cplusplus
 }
 #endif
