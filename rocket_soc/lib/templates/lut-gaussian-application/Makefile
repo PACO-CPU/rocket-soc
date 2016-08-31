@@ -12,10 +12,9 @@ RESULT_IMG=result.png
 CFLAGS+= \
   -Iinclude \
   -I$(RISCV)/include \
-	-I$(RISCV)/riscv64-unknown-elf/include \
+  -I$(RISCV)/riscv64-unknown-elf/include \
   -std=gnu99 -static -fno-common -fno-builtin-printf \
-  #-target riscv -mriscv=RV64IAMFD 
-#  -march=RV64IMA
+  -O3
 
 LFLAGS+= \
   -L$(RISCV)/lib \
@@ -45,6 +44,9 @@ run: main.bin
 	sed -r -i "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" result.h
 	./img_raw_converter.py --image -i result.h -o $(RESULT_IMG)
 	rm -f result.h
+
+run-time: main.bin
+	riscv-uart-flash -w -i main.bin -p $(UART)
 
 main: $(S_FILES)
 	$(GCC) $^ -lm -o $@ $(LFLAGS)
