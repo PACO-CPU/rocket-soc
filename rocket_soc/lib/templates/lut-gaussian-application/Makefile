@@ -6,7 +6,7 @@ GCC?=$(CROSS_COMPILE)gcc
 CXX?=clang++
 CC?=$(GCC)
 
-UART?=/dev/ttyUSB0
+UART?=/dev/ttyUSB1
 RESULT_IMG=result.png
 
 CFLAGS+= \
@@ -14,7 +14,9 @@ CFLAGS+= \
   -I$(RISCV)/include \
   -I$(RISCV)/riscv64-unknown-elf/include \
   -std=gnu99 -static -fno-common -fno-builtin-printf \
-  -O3
+  -Wattributes \
+  -O3 \
+  -g3
 
 LFLAGS+= \
   -L$(RISCV)/lib \
@@ -26,11 +28,11 @@ TARGETS=main main.dump main.bin
 #LUT_CONFIG_FILES=bitstream.h input_vec.h output_vec.h
 # LUT cores to be added to the program
 LUTS=lut0
-RAW_IMG_DATA=image/data0.h
+RAW_IMG_DATA=image/data0.c
 IMG_FILE=image/image01.png
 
 # source files
-SRC=main.c lut0.c 
+SRC=main.c lut0.c $(RAW_IMG_DATA)
 
 # assembly files
 S_FILES=lut-startup.s $(patsubst %.c,%.s,$(SRC))
@@ -61,10 +63,9 @@ main.bin: main
 	$(CROSS_COMPILE)objcopy -O binary main main.bin
 
 main.dump: main
-	$(CROSS_COMPILE)objdump -D main > main.dump
+	$(CROSS_COMPILE)objdump -S main > main.dump
 
-
-main.s: $(SRC) $(RAW_IMG_DATA)
+main.s: $(SRC)
 	$(GCC) $(CFLAGS) -S $(SRC) 
 
 lut-startup.s: default.arch

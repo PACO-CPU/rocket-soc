@@ -26,18 +26,25 @@ int main() { return main_(); }
     : "r"(op1), "r"(op2), "r"(op3)); \
   rv1;})
 
-#include "image/data0.h"
+
+extern char image[];
+//#include "image/data0.h"
 
 
 uint64_t kernel[9] = {1, 3, 1,
                       3, 9, 3,
                       1, 3, 1,};
 
-uint64_t get_cycles() {
+
+/*uint64_t get_cycles() {
   uint64_t r;
   asm("rdcycle %0" : "=r"(r));
   return r;
-}
+}*/
+
+#define get_cycles(cycle) do {       \
+    asm("rdcycle %0" : "=r"(cycle)); \
+} while(0) 
 
 void write_raw_image_header()
 {
@@ -53,11 +60,12 @@ void write_raw_image_header()
     uart_println(buf);
 }
 
+#ifndef LUT
 void gauss_native()
 {
     int result, value1, value2, value3;
     int intermediate[IMG_RESULT_SIZE];
-    int r;
+    int r, ret=0;
     char buf[128];
     int x, y, i;
 
@@ -74,6 +82,8 @@ void gauss_native()
             result += image[(y + 1) * IMG_WIDTH + (x + 1)] * kernel[8];
 
             result /= 25;
+
+            ret += result;
             /* print single result to uart */
             r=0;
             r+=wruint64(buf+r,result);
@@ -81,44 +91,55 @@ void gauss_native()
             uart_println(buf);
         }
     }
-
+    
+    r=0;
+    r+=wruint64(buf+r,ret);
+    //uart_println(buf);
 }
-
+#else 
 void gauss_lut()
 {
     int result, value1, value2, value3;
+    int r, ret=0;
     int intermediate[IMG_RESULT_SIZE];
-    int r;
-    char buf[128];
+    char buf[64];
     int x, y, i;
     /* Horizontal */
     for (i = 1; i < (IMG_WIDTH * IMG_HEIGHT)-1; i++) {
         value1= image[i-1];
         value2= image[i];
         value3= image[i+1];
-        result = LUTE3(0, value1, value2, value3);
+        intermediate[i] = LUTE3(0, value1, value2, value3);
 
-        intermediate[i] = result;
+/*        value1= image[i+2];
+        intermediate[i+1] = LUTE3(0, value2, value3, value1);
+
+        value2= image[i+3];
+        intermediate[i+2] = LUTE3(0, value3, value1, value2);*/
     }
-
     for (x = 1; x < IMG_WIDTH - 1; x++) {
         for (y = 1; y < IMG_HEIGHT - 1; y++) {
             value1 = intermediate[(y-1) * IMG_WIDTH + x];
             value2 = intermediate[(y  ) * IMG_WIDTH + x];
             value3 = intermediate[(y+1) * IMG_WIDTH + x];
             result = LUTE3(0, value1, value2, value3);
+            
+            ret += result;
             /* print single result to uart */
             r=0;
             r+=wruint64(buf+r,result);
             r+=wrstring(buf+r,",");
             uart_println(buf);
-
         }
 
     }
 
+    r=0;
+    r+=wruint64(buf+r,ret);
+    //uart_println(buf);
 }
-
+#endif
+#ifdef DEBUG
 void run_debug()
 {
     int x, y, i, r, result;
@@ -144,14 +165,31 @@ void run_debug()
     }
 
 }
+#endif
+void __attribute__ ((noinline)) print_cycles(uint64_t start_cycles)
+{
+    char buf[32];
+    int r;
+    uint64_t d;
+    get_cycles(d);
+    r = 0;
+    r += wrstring(buf + r, "Cycles end = ");
+    r += wruint64(buf + r, d - start_cycles);
+    uart_println(buf);
+
+}
 
 int main_()
 {
-    char buf[128];
+    char buf[32];
     int r;
-    uint64_t cycles = 0;
+    /* Make c volatile, otherwise O3 will optimize it out */
+    volatile uint64_t c;
     write_raw_image_header();
-    cycles = get_cycles();
+    get_cycles(c);
+    r = 0;
+    r += wrstring(buf + r, "Cycles start = ");
+    r += wruint64(buf + r, c);
 #ifdef LUT
     gauss_lut();
 #else
@@ -162,12 +200,7 @@ int main_()
 #endif
 #endif
     uart_println("};");
-
-    cycles = get_cycles() - cycles;
-    r = 0;
-    r += wrstring(buf + r, "Cycles used = ");
-    r += wruint64(buf + r, cycles);
-    uart_println(buf);
+    print_cycles(c);
     uart_exit(0);
     return 0;
 }
