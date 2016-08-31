@@ -65,9 +65,9 @@ elif args.raw:
     # write the result to the output-file
     f = open(args.o[0], 'w')
     f.write("//(" + str(width) + ", " + str(height) + ")\n")
-    f.write("char image[] = {\n")
+    f.write("uint32_t image[] = {\n")
     for v in data:
-        f.write(str(v[0]) + ",\n")
+        f.write(str(v) + ",\n")
     f.write("};")
 
     f.close()
