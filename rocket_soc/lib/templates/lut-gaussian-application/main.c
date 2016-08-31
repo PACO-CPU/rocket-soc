@@ -7,10 +7,10 @@
 // use a wrapper, as such:
 int main_();
 int main() { return main_(); }
-//#define LUT
+#define LUT
 //#define DEBUG
-#define IMG_WIDTH 64
-#define IMG_HEIGHT 64
+#define IMG_WIDTH 128
+#define IMG_HEIGHT 128
 #define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
 
 #define LUTE(idx,arg) ({ \
@@ -27,8 +27,8 @@ int main() { return main_(); }
   rv1;})
 
 
-extern char image[];
-//#include "image/data0.h"
+//extern char image[];
+#include "image/data0.h"
 
 
 uint64_t kernel[9] = {1, 3, 1,
@@ -85,16 +85,16 @@ void gauss_native()
 
             ret += result;
             /* print single result to uart */
-            r=0;
+            /*r=0;
             r+=wruint64(buf+r,result);
             r+=wrstring(buf+r,",");
-            uart_println(buf);
+            uart_println(buf);*/
         }
     }
     
     r=0;
     r+=wruint64(buf+r,ret);
-    //uart_println(buf);
+    uart_println(buf);
 }
 #else 
 void gauss_lut()
@@ -105,17 +105,17 @@ void gauss_lut()
     char buf[64];
     int x, y, i;
     /* Horizontal */
-    for (i = 1; i < (IMG_WIDTH * IMG_HEIGHT)-1; i++) {
+    for (i = 1; i < (IMG_WIDTH * IMG_HEIGHT)-1; i = i + 3) {
         value1= image[i-1];
         value2= image[i];
         value3= image[i+1];
         intermediate[i] = LUTE3(0, value1, value2, value3);
-
-/*        value1= image[i+2];
+        
+        value1 = image[i+2];
         intermediate[i+1] = LUTE3(0, value2, value3, value1);
 
-        value2= image[i+3];
-        intermediate[i+2] = LUTE3(0, value3, value1, value2);*/
+        value2 = image[i+3];
+        intermediate[i+2] = LUTE3(0, value3, value1, value2);
     }
     for (x = 1; x < IMG_WIDTH - 1; x++) {
         for (y = 1; y < IMG_HEIGHT - 1; y++) {
@@ -126,17 +126,17 @@ void gauss_lut()
             
             ret += result;
             /* print single result to uart */
-            r=0;
+            /*r=0;
             r+=wruint64(buf+r,result);
             r+=wrstring(buf+r,",");
-            uart_println(buf);
+            uart_println(buf);*/
         }
 
     }
 
     r=0;
     r+=wruint64(buf+r,ret);
-    //uart_println(buf);
+    uart_println(buf);
 }
 #endif
 #ifdef DEBUG
