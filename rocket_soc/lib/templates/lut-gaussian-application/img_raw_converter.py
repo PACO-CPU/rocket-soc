@@ -41,6 +41,10 @@ if args.image:
 
         img = Image.new("L", (width, height))
         img.putdata(data_int)
+        # fix up the image data
+        img = img.rotate(-90)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        # save it to a file
         img.save(args.o[0])
 
     else:
