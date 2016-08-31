@@ -7,14 +7,14 @@ CXX?=clang++
 CC?=$(GCC)
 
 UART?=/dev/ttyUSB0
+RESULT_IMG=result.png
 
 CFLAGS+= \
   -Iinclude \
   -I$(RISCV)/include \
-	-I$(RISCV)/riscv64-unknown-elf/include \
+  -I$(RISCV)/riscv64-unknown-elf/include \
   -std=gnu99 -static -fno-common -fno-builtin-printf \
-  #-target riscv -mriscv=RV64IAMFD 
-#  -march=RV64IMA
+  -O3
 
 LFLAGS+= \
   -L$(RISCV)/lib \
@@ -44,10 +44,14 @@ simulate:
   ./riscv-lut-tool --arch default.arch -d /dev/stdin -p -s 0 0 0 /dev/stdout
 
 run: main.bin
-	riscv-uart-flash -i main.bin -p $(UART) > result.h
-	sed -i '1,7d' result.h
-	sed -i 's/\^\[\[[0-9][0-9];0m\^\[\[[0-9][0-9];1m//g' result.h
-	sed -i '$ d' result.h
+	riscv-uart-flash -w -i main.bin -p $(UART) > result.h
+	sed -i '1,6d' result.h
+	sed -r -i "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" result.h
+	./img_raw_converter.py --image -i result.h -o $(RESULT_IMG)
+	rm -f result.h
+
+run-time: main.bin
+	riscv-uart-flash -w -i main.bin -p $(UART)
 
 main: $(S_FILES)
 	$(GCC) $^ -lm -o $@ $(LFLAGS)
@@ -74,4 +78,4 @@ $(RAW_IMG_DATA): $(IMG_FILE)
 
 
 clean:
-	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUT_CONFIG_FILES) $(RAW_IMG_DATA)
+	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUT_CONFIG_FILES) $(RAW_IMG_DATA) $(RESULT_IMG)
