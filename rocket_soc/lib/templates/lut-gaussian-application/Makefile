@@ -38,6 +38,11 @@ S_FILES=lut-startup.s $(patsubst %.c,%.s,$(SRC))
 
 all: $(TARGETS)
 
+simulate:
+	(cat config/ram_diag.h config/or.h config/and.h config/connection.h)  | \
+  sed "s/L,/\n/g" | sed "s/,/\n/g" | sed "s/U//g" | grep -vE "^$$" | \
+  ./riscv-lut-tool --arch default.arch -d /dev/stdin -p -s 0 0 0 /dev/stdout
+
 run: main.bin
 	riscv-uart-flash -i main.bin -p $(UART) > result.h
 	sed -i '1,7d' result.h
@@ -66,6 +71,7 @@ lut-startup.s: default.arch
 
 $(RAW_IMG_DATA): $(IMG_FILE)
 	./img_raw_converter.py --raw -i $< -o $@
+
 
 clean:
 	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUT_CONFIG_FILES) $(RAW_IMG_DATA)
