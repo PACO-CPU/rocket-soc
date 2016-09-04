@@ -1,8 +1,86 @@
-double root(int a, int b)
+#include<stdio.h>
+#include <inttypes.h>
+ 
+//#include <math.h>
+double root1(int,int);
+float power(double,int);
+float powlib(int,int,int);
+float powlib(int base, int exponent, int factor)
+{
+   float powerresult;
+   if(base == 1)
+     return (float)base;
+
+   if(exponent == 0)
+      return (float)1;
+
+   if(exponent == 1)
+     return (float)base;
+  
+   if(factor > 1 && exponent > 0) 
+    {
+       double root = root1(base,factor);
+       //int expo = (exponent > 0) ? 1*exponent : (-1)*exponent;
+       powerresult = power(root,exponent);
+        
+    }
+   else if(exponent < 0 && factor > 1 )
+    {
+      double root = root1(base,factor);
+      int expo = (exponent > 0) ? 1*exponent : (-1)*exponent;
+      powerresult = power(root,expo);
+      powerresult = 1/powerresult;
+    }
+     else if (factor == 1 && exponent <0)
+     {
+       int expo = (exponent > 0) ? 1*exponent : (-1)*exponent;
+       powerresult = power((double)base, expo);
+       powerresult = 1 / powerresult;
+     }
+     else if (factor == 1 && exponent >0)
+     {
+       powerresult = power((double)base, exponent);
+     }
+    
+    return powerresult;
+
+ 
+      
+}
+
+
+
+int main()
+{
+    int base;
+    int exponent;
+    int factor;
+    printf("Enter base: ");
+    scanf("%d",&base);
+    printf("Enter the value for 'n'(the root to be calculated): ");
+    scanf("%d",&exponent);
+    printf("Enter the factor for: ");
+    scanf("%d",&factor);
+    float result = powlib(base,exponent,factor);
+    printf("result is %f", result);
+
+   //float number = power(num1,n);
+   //printf("power is %f \n \n",number);
+   //int base = (int)number;
+   /*double root=  root1(num1,100);
+   printf("root is %f \n \n",root);
+   float number = power(root,n);
+   printf("power is %f \n \n",number);*/
+  
+    return 0;
+}
+ 
+double root1(int a, int b)
 {
     int j;
-    double i,k=1;
-    double incre = 0.0000001;
+    double i,k=1.0;
+    double incre = 0.000001;
+ 
     for(i=1; i<=a; i = i+incre)
     {
         for(j=0;j<b;j++)
@@ -15,89 +93,28 @@ double root(int a, int b)
             break;
         }
         else
-            k=1;
+            k=1.0;
     }
 }
-
-
-float pow(int x,int y)
+float power (double x,int n)
 {
-    int i; /* Variable used in loop counter */
-    float number = 1.0;
+    int i;  /*Variable used in loop counter*/
+    double val = 1.0;
 
-    for (i = 0; i < y; ++i)
-        number *= x;
+    for (i = 0; i < n; i++)
+        val *= x;
 
-    return(number);
+    return (float)(val);
+   /*double value=1;
+   while(n>0)
+   {
+    value*=x;
+    --n;
+   }
+   return value;*/
 }
 
-
-unsigned int absolute(signed int y)
-{
-
-  return y * ( (y<0) * (-1) + (y>0));
-  // simpler: y * ((y>0) - (y<0))   
-
-}
-
-int main()
-{
-    int number,answer1;
-    signed int exponent_n,exponent_d;
-    float answer;
-    int reciprocal,fraction;
-
-
-
-    printf("Enter base (x in x^[n/d]): ");
-    scanf("%d",&number);
-
-    printf("Enter exponent_n (n in x^[n/d]): ");
-    scanf("%d",&exponent_n);
-
-    printf("Enter exponent_d (d in x^[n/d]): ");
-    scanf("%d",&exponent_d);
-
-
-
-printf("expo: %d/%d \n", exponent_n,exponent_d);
-
-	reciprocal = (exponent_n<0)? 1 : 0;
-	
-	fraction =  (exponent_d!=1)? 1 : 0;
-
-
-
-//calculating and printing answer
-
-
-    	if(reciprocal==1 && fraction==1){
-		
-		exponent_n = absolute(exponent_n);
-		answer1 = pow(number,exponent_n);
-		answer =  root(answer1,exponent_d);	
-		printf("x^y : %f\n",1/answer);   
-                printf("\nflag1\n");
-	
-	}else if(reciprocal==1 && fraction==0){
-
-		exponent_n = absolute(exponent_n);	
-		answer = pow(number,exponent_n); 	
-		printf("x^y : %f\n",1/answer);  printf("\nflag2\n");
-
-	}else if(reciprocal==0 && fraction==1){
-		
-		answer1 = pow(number,exponent_n);
-		answer =  root(answer1,exponent_d);
-		printf("x^y : %f\n",answer);  printf("\nflag3\n");
-
-	}else{
-
-		answer = pow(number,exponent_n); 	
-		printf("x^y : %f\n",answer);  printf("\nflag4\n");
-    
-	}
-
-    return 0;
-}
-
+/*int pow(int a, int e){
+    if(e == 1) return a;
+    return a * pow(a,e-1);
+}*/
