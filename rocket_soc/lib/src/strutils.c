@@ -36,3 +36,22 @@ void wruint64_hex(char *p, uint64_t v) {
   for(i=60;i>=0;i-=4) *(p++)=alp[(v>>i)&0xf];
 }
 
+
+void wruint32_hex(char *p, uint32_t v) {
+  static const char alp[]="0123456789abcdef";
+  int i;
+  for(i=28;i>=0;i-=4) *(p++)=alp[(v>>i)&0xf];
+}
+
+void wruint16_hex(char *p, uint16_t v) {
+  static const char alp[]="0123456789abcdef";
+  int i;
+  for(i=12;i>=0;i-=4) *(p++)=alp[(v>>i)&0xf];
+}
+
+void wruint8_hex(char *p, uint8_t v) {
+  static const char alp[]="0123456789abcdef";
+  int i;
+  for(i=4;i>=0;i-=4) *(p++)=alp[(v>>i)&0xf];
+}
+
