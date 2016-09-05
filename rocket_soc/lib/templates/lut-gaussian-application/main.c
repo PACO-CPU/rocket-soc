@@ -9,9 +9,6 @@ int main_();
 int main() { return main_(); }
 #define LUT
 //#define DEBUG
-#define IMG_WIDTH 128
-#define IMG_HEIGHT 128
-#define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
 
 #define LUTE(idx,arg) ({ \
   uint64_t op1=arg, rv1; \
@@ -29,7 +26,7 @@ int main() { return main_(); }
 
 //extern char image[];
 #include "image/data0.h"
-
+#define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
 
 uint64_t kernel[9] = {1, 3, 1,
                       3, 9, 3,

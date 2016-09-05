@@ -29,7 +29,7 @@ TARGETS=main main.dump main.bin
 # LUT cores to be added to the program
 LUTS=lut0
 RAW_IMG_DATA=image/data0.h
-IMG_FILE=image/image02.png
+IMG_FILE=image/lenna_256x256.png
 
 # source files
 SRC=main.c lut0.c 
