@@ -76,7 +76,7 @@ _start:
   csrc mstatus, t0    # run tests in user mode
   li t0, MSTATUS_IE1
   csrs mstatus, t0    # enable interrupts in user mode
-  #li t0, MSTATUS_FS;   csrs mstatus, t0    # enable FPU
+  li t0, MSTATUS_FS;   csrs mstatus, t0    # enable FPU
   #li t0, MSTATUS_XS;   csrs mstatus, t0    # enable accelerator
 
   ##! enable interrupts
