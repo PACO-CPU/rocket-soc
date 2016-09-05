@@ -7,9 +7,12 @@
 // use a wrapper, as such:
 int main_();
 int main() { return main_(); }
-
+/* Note: Do not set these preprocessor variables here
+ * The makefile sets them appropriatly if you use the
+ * correct rule, e.g "make result-lut" will set OUTPUT
+ * and LUT.
+ */
 //#define LUT
-//#define DEBUG
 //#define OUTPUT
 
 #define LUTE(idx,arg) ({ \
@@ -25,25 +28,16 @@ int main() { return main_(); }
     : "r"(op1), "r"(op2), "r"(op3)); \
   rv1;})
 
+#define get_cycles(cycle) do {       \
+    asm("rdcycle %0" : "=r"(cycle)); \
+} while(0)
 
-//extern char image[];
 #include "image/data0.h"
 #define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
 
 uint64_t kernel[9] = {1, 3, 1,
                       3, 9, 3,
                       1, 3, 1,};
-
-
-/*uint64_t get_cycles() {
-  uint64_t r;
-  asm("rdcycle %0" : "=r"(r));
-  return r;
-}*/
-
-#define get_cycles(cycle) do {       \
-    asm("rdcycle %0" : "=r"(cycle)); \
-} while(0) 
 
 void write_raw_image_header()
 {
@@ -89,15 +83,15 @@ void gauss_native()
             r+=wruint64(buf+r,result);
             r+=wrstring(buf+r,",");
             uart_println(buf);
-#endif 
+#endif
         }
     }
-    
+
     r=0;
     r+=wruint64(buf+r,ret);
     uart_println(buf);
 }
-#else 
+#else
 void gauss_lut()
 {
     int result, value1, value2, value3;
@@ -111,7 +105,7 @@ void gauss_lut()
         value2= image[i];
         value3= image[i+1];
         intermediate[i] = LUTE3(0, value1, value2, value3);
-        
+
         value1 = image[i+2];
         intermediate[i+1] = LUTE3(0, value2, value3, value1);
 
@@ -124,7 +118,7 @@ void gauss_lut()
             value2 = intermediate[(y  ) * IMG_WIDTH + x];
             value3 = intermediate[(y+1) * IMG_WIDTH + x];
             result = LUTE3(0, value1, value2, value3);
-            
+
             ret += result;
 #ifdef OUTPUT
             /* print single result to uart */
@@ -142,33 +136,7 @@ void gauss_lut()
     uart_println(buf);
 }
 #endif
-#ifdef DEBUG
-void run_debug()
-{
-    int x, y, i, r, result;
-    char buf[128];
 
-    for (x = 0; x < 256; x = x + 32) {
-        for (y = 0; y < 256; y = y + 32) {
-            for (i = 0; i < 256; i = i + 32) {
-                result = LUTE3(0, x, y, i);
-
-                r = 0;
-                r += wrstring(buf + r, "");
-                r += wruint64(buf + r, x);
-                r += wrstring(buf + r, ",");
-                r += wruint64(buf + r, y);
-                r += wrstring(buf + r, ",");
-                r += wruint64(buf + r, i);
-                r += wrstring(buf + r, ",");
-                r += wruint64(buf + r, result);
-                uart_println(buf);
-            }
-        }
-    }
-
-}
-#endif
 void __attribute__ ((noinline)) print_cycles(uint64_t start_cycles)
 {
     char buf[32];
@@ -198,12 +166,9 @@ int main_()
 #ifdef LUT
     gauss_lut();
 #else
-#ifdef DEBUG
-    run_debug();
-#else
     gauss_native();
 #endif
-#endif
+
 #ifdef OUTPUT
     uart_println("};");
 #endif
