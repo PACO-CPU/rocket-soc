@@ -9,6 +9,7 @@ int main_();
 int main() { return main_(); }
 #define LUT
 //#define DEBUG
+//#define OUTPUT
 
 #define LUTE(idx,arg) ({ \
   uint64_t op1=arg, rv1; \
@@ -81,11 +82,13 @@ void gauss_native()
             result /= 25;
 
             ret += result;
+#ifdef OUTPUT
             /* print single result to uart */
-            /*r=0;
+            r=0;
             r+=wruint64(buf+r,result);
             r+=wrstring(buf+r,",");
-            uart_println(buf);*/
+            uart_println(buf);
+#endif 
         }
     }
     
@@ -122,11 +125,13 @@ void gauss_lut()
             result = LUTE3(0, value1, value2, value3);
             
             ret += result;
+#ifdef OUTPUT
             /* print single result to uart */
-            /*r=0;
+            r=0;
             r+=wruint64(buf+r,result);
             r+=wrstring(buf+r,",");
-            uart_println(buf);*/
+            uart_println(buf);
+#endif
         }
 
     }
@@ -182,7 +187,9 @@ int main_()
     int r;
     /* Make c volatile, otherwise O3 will optimize it out */
     volatile uint64_t c;
+#ifdef OUTPUT
     write_raw_image_header();
+#endif
     get_cycles(c);
     r = 0;
     r += wrstring(buf + r, "Cycles start = ");
@@ -196,7 +203,9 @@ int main_()
     gauss_native();
 #endif
 #endif
+#ifdef OUTPUT
     uart_println("};");
+#endif
     print_cycles(c);
     uart_exit(0);
     return 0;
