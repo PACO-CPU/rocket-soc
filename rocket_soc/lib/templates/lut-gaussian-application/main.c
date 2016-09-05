@@ -7,7 +7,8 @@
 // use a wrapper, as such:
 int main_();
 int main() { return main_(); }
-#define LUT
+
+//#define LUT
 //#define DEBUG
 //#define OUTPUT
 

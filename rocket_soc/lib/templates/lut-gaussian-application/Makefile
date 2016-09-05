@@ -45,19 +45,35 @@ simulate:
   sed "s/L,/\n/g" | sed "s/,/\n/g" | sed "s/U//g" | grep -vE "^$$" | \
   ./riscv-lut-tool --arch default.arch -d /dev/stdin -p -s 0 0 0 /dev/stdout
 
-run: main.bin
+output-config:
+	@$(eval CFLAGS := $(CFLAGS) -DOUTPUT)
+
+result-native: clean output-config main.bin
 	riscv-uart-flash -w -i main.bin -p $(UART) > result.h
 	sed -i '1,6d' result.h
 	sed -r -i "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" result.h
 	./img_raw_converter.py --image -i result.h -o $(RESULT_IMG)
 	rm -f result.h
 
-run-time: main.bin
+lut-config: 
+	@$(eval CFLAGS := $(CFLAGS) -DLUT)
+	@echo $(CFLAGS)
+
+result-lut: clean lut-config output-config main.bin
+	riscv-uart-flash -w -i main.bin -p $(UART) > result.h
+	sed -i '1,6d' result.h
+	sed -r -i "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" result.h
+	./img_raw_converter.py --image -i result.h -o $(RESULT_IMG)
+	rm -f result.h
+
+performance-lut: clean lut-config main.bin
+	riscv-uart-flash -w -i main.bin -p $(UART)
+
+performance-native: clean main.bin
 	riscv-uart-flash -w -i main.bin -p $(UART)
 
 main: $(S_FILES)
 	$(GCC) $^ -lm -o $@ $(LFLAGS)
-
 
 main.bin: main
 	$(CROSS_COMPILE)objcopy -O binary main main.bin
