@@ -41,6 +41,10 @@ if args.image:
 
         img = Image.new("L", (width, height))
         img.putdata(data_int)
+        # fix up the image data
+        img = img.rotate(-90)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        # save it to a file
         img.save(args.o[0])
 
     else:
@@ -61,9 +65,11 @@ elif args.raw:
     # write the result to the output-file
     f = open(args.o[0], 'w')
     f.write("//(" + str(width) + ", " + str(height) + ")\n")
-    f.write("uint64_t image[] = {\n")
+    f.write("#define IMG_WIDTH " + str(width) + "\n")
+    f.write("#define IMG_HEIGHT " + str(height) + "\n")
+    f.write("uint32_t image[] = {\n")
     for v in data:
-        f.write(str(v[0]) + ",\n")
+        f.write(str(v) + ",\n")
     f.write("};")
 
     f.close()

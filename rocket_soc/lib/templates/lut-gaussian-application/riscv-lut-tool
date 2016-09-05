@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+import re,sys,os,shutil
+import htlib
+
+
+def print_help(f=sys.stdout):
+  f.write(
+    "riscv-lut-tool [options]\n"
+    "  tool for loading PACO LUT bitstreams, visualizing or simulating them.\n"
+    "options:\n"
+    "  -a|--arch <filename>\n"
+    "    Load an architecture file to retrieve LUT core parameters.\n"
+    "  -d|--dump <filename>\n"
+    "    Load a register dump file and decompile it to obtain the lut \n"
+    "    configuration\n"
+    "  -p|--visualize\n"
+    "    Display a visualization of a loaded lut configuration on standard\n"
+    "    output.\n"
+    "  -s|--simulate <x0> <x1> <step> <filename>\n"
+    "    Evaluate a loaded lut configuration for inputs between x0 and x1, \n"
+    "    with a spacing of step. Output the resulting values into <filename>.\n"
+    "    The result is a newline-seperated list of data points, each being a \n"
+    "    tab-seperated list of numbers for x, selector, interpolator, address\n"
+    "    and output of the lut simulation.\n"
+    "  -c|--configuration\n"
+    "    Output the configuration data after loading an arch file\n"
+    "  -h|--help\n"
+    "    print this help text and exit\n")
+
+fnArch=None
+fnDump=None
+fVisualize=False
+simulateX0=None
+simulateX1=None
+simulateStep=None
+fnSimulate=None
+fOutputConfiguration=False
+
+try:
+  s=None
+  for arg in sys.argv[1:]:
+    if s==None:
+      if arg[:1]=="-":
+        if arg in {"-h","--help"}: 
+          print_help(sys.stdout)
+          sys.exit(0)
+        elif arg in {"-a","--arch"}: s="--arch"
+        elif arg in {"-d","--dump"}: s="--dump"
+        elif arg in {"-p","--visualize"}: fVisualize=True
+        elif arg in {"-s","--simulate"}: s="--simulate:0"
+        elif arg in {"-c","--configuration"}: fOutputConfiguration=True
+        else:
+          raise Exception("unknown switch: %s"%arg)
+      else:
+        raise Exception("stray argument: %s"%arg)
+    elif s=="--arch":
+      fnArch=arg
+      s=None
+    elif s=="--dump":
+      fnDump=arg
+      s=None
+    elif s=="--simulate:0":
+      simulateX0=int(arg)
+      s="--simulate:1"
+    elif s=="--simulate:1":
+      simulateX1=int(arg)
+      s="--simulate:2"
+    elif s=="--simulate:2":
+      simulateStep=int(arg)
+      s="--simulate:3"
+    elif s=="--simulate:3":
+      fnSimulate=arg
+      s=None
+
+  if s=="--arch": raise Exception("arch file name expected")
+  if s=="--dump": raise Exception("configuration register dump file name expected")
+  if s=="--simulate:0": raise Exception("simulation range start expected")
+  if s=="--simulate:1": raise Exception("simulation range end expected")
+  if s=="--simulate:2": raise Exception("simulation range step expected")
+  if s=="--simulate:3": raise Exception("simulation output file name expected")
+
+except Exception as e:
+  print_help(sys.stderr)
+  sys.stderr.write("\x1b[31;1mError: \x1b[30;0m%s\n"%e)
+  sys.exit(1)
+
+iface=htlib.IFace()
+bvs=htlib.BitstreamVisualizer(iface)
+core=htlib.LUTCoreControl(iface)
+
+if fnArch!=None:
+  iface.load_arch_file(fnArch)
+
+if fOutputConfiguration:
+  iface.print_config(extended=True)
+
+words=None
+
+if fnDump!=None:
+  words=[]
+  with open(fnDump,"r") as f:
+    for ln in f:
+      lns=ln.strip()
+      if len(lns)<1: continue
+      words.append(int(lns))
+
+print("words: %i",len(words))
+
+if fVisualize:
+  if words==None: 
+    raise Exception("no lut configuration supplied for visualization")
+
+  vis=bvs.visualize(words)
+  print(bvs.render_ascii(vis))
+
+if fnSimulate!=None:
+  if words==None: 
+    raise Exception("no lut configuration supplied for simulation")
+
+  intermediate=core.decompile_bitstream(words)
+  with open(fnSimulate,"w") as f:
+    for c in range(0,8):
+      for b in range(0,8):
+        for a in range(0,8):
+          x=(a<<5) | (b<<69) | (c<<133)
+          res=intermediate.sim_ex(x)
+          f.write(
+            "%s\t%s\t%s\t%s\t"
+            "\x1b[34;1m%s\x1b[30;0m\t%s\t%s\t%s\n"
+            %(a,b,c,x,"{0:09b}".format(res.selector),res.interpolator,res.address,res.result))
+
+    if False:
+      for x in range(simulateX0,simulateX1,simulateStep):
+        res=intermediate.sim_ex(x)
+        f.write(
+          "%s\t%s\t%s\t%s\t%s\n"
+          %(x,res.selector,res.interpolator,res.address,res.result))
+
