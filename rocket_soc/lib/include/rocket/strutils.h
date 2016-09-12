@@ -39,6 +39,12 @@ int wruint64(char *ptr,uint64_t v);
   */
 void wruint64_hex(char *p, uint64_t v);
 
+/** \see wruint64_hex */
+void wruint32_hex(char *p, uint32_t v);
+/** \see wruint64_hex */
+void wruint16_hex(char *p, uint16_t v);
+/** \see wruint64_hex */
+void wruint8_hex(char *p, uint8_t v);
 #ifdef __cplusplus
 }
 #endif

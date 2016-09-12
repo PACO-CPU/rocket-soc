@@ -352,12 +352,15 @@ end generate;
   --! Internal SRAM module instance with the AXI4 interface.
   --! @details Map address:
   --!          0x10000000..0x1007ffff (512 KB total)
-  sram0 : nasti_sram generic map (
+  sram0 : nasti_sram_fake generic map (
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_SRAM,
     xaddr    => 16#10000#,
-    xmask    => 16#fff80#,            -- 512 KB mask
-    abits    => (10 + log2(512)),     -- 512 KB address
+--  xmask    => 16#fff80#,            -- 512 KB mask
+  xmask    => 16#fe000#,            -- 32 MB mask
+--    abits    => (10 + log2(512)),     -- 512 KB address
+    abits    => (20 + log2(32)),     -- 32 MB address
+    abits_real => (10+log2(512)),
     init_file => CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
   ) port map (
     clk  => wClkBus,

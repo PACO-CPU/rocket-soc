@@ -72,3 +72,27 @@ void uart_exit(int status)
     uart_write(buf, 3);
     return;
 }
+
+static const char hexdig[]="0123456789abcdef";
+
+void uart_write_u64_hex(uint64_t v) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
+  int i;
+  for(int i=60;i>=0;i-=4) UART_WRITE(hexdig[(v>>i)&0xf]);
+}
+void uart_write_u32_hex(uint32_t v) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
+  int i;
+  for(int i=28;i>=0;i-=4) UART_WRITE(hexdig[(v>>i)&0xf]);
+}
+void uart_write_u16_hex(uint16_t v) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
+  int i;
+  for(int i=12;i>=0;i-=4) UART_WRITE(hexdig[(v>>i)&0xf]);
+}
+void uart_write_u8_hex(uint8_t v) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
+  int i;
+  for(int i=8;i>=0;i-=4) UART_WRITE(hexdig[(v>>i)&0xf]);
+}
+

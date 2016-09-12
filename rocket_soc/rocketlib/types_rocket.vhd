@@ -398,6 +398,26 @@ component nasti_sram is
   );
 end component; 
 
+--! Internal RAM with AXI4 interface declaration, faking larger size than it has.
+component nasti_sram_fake is
+  generic (
+    memtech  : integer := inferred;
+    xindex   : integer := 0;
+    xaddr    : integer := 0;
+    xmask    : integer := 16#fffff#;
+    abits    : integer := 17;
+    abits_real : integer := 17;
+    init_file : string := "" -- only for 'inferred'
+  );
+  port (
+    clk  : in std_logic;
+    nrst : in std_logic;
+    cfg  : out nasti_slave_config_type;
+    i    : in  nasti_slave_in_type;
+    o    : out nasti_slave_out_type
+  );
+end component; 
+
 
 --! @brief NASTI (AXI4) GPIO controller
 component nasti_gpio is

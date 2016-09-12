@@ -70,6 +70,11 @@ void uart_println(const char *ptr);
 
 void uart_exit(int status);
 
+void uart_write_u64_hex(uint64_t v);
+void uart_write_u32_hex(uint32_t v);
+void uart_write_u16_hex(uint16_t v);
+void uart_write_u8_hex(uint8_t v);
+
 #ifdef __cplusplus
 }
 #endif
