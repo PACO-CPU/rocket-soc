@@ -2,7 +2,7 @@
 
 CROSS_COMPILE?=$(RISCV)/bin/riscv64-unknown-elf-
 GCC?=$(CROSS_COMPILE)gcc
-CLANG?=/home/fpga/pg/paco-env/riscv-tools-src/riscv-llvm/build/Debug+Asserts/bin/clang
+CLANG?=$(RISCV)/bin/clang
 
 CXX?=clang++
 CC?=clang

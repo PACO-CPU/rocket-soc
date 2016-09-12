@@ -41,9 +41,7 @@ void write_raw_image_header()
 }
 
 void gauss_alu(){
-    int result;
-    int value1, value2, value3;
-    int intermediate[IMG_RESULT_SIZE];
+    int approx(neglect_amount=2 inject=1 relax=1) result;
     int r;
     char buf[128];
     int x, y, i;
