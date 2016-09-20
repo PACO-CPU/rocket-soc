@@ -14,10 +14,10 @@ CFLAGS+= \
   -Iinclude \
   -I$(RISCV)/include \
   -I$(RISCV)/riscv64-unknown-elf/include \
-  -std=c11  -static -fno-common -fno-builtin-printf \
+  -std=gnu99  -static -fno-common -fno-builtin-printf \
   -Wattributes \
   -O3 -g3\
-  -target riscv -mriscv=RV64IAMFD  
+#  -target riscv -mriscv=RV64IAMFD  
 
 LFLAGS+= \
   -L$(RISCV)/lib \
@@ -59,7 +59,7 @@ main.dump: main
 	$(CROSS_COMPILE)objdump -D main > main.dump
 
 main.s: $(SRC) $(RAW_IMG_DATA)
-	$(CLANG) $(CFLAGS) -S $(SRC) 
+	$(GCC) $(CFLAGS) -S $(SRC) 
 
 %.s:%.c 
 	$(GCC) $(CFLAGS) -S $^ -o $@

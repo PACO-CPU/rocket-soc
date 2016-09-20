@@ -65,7 +65,7 @@ elif args.raw:
     # write the result to the output-file
     f = open(args.o[0], 'w')
     f.write("//(" + str(width) + ", " + str(height) + ")\n")
-    f.write("int approx(neglect_amount=2 inject=1 relax=1) image[] = {\n")
+    f.write("int image[] = {\n")
     for v in data:
         f.write(str(v[0]) + ",\n")
     f.write("};")
