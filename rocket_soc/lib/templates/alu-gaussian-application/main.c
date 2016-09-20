@@ -10,22 +10,41 @@
 int main_();
 int main() { return main_(); }
 
-#define ALU
-#ifdef ALU
-  #define approx(...)
-#endif
+#define USE_ADD_APPROX
+#define ADD_APPROX_AMOUNT 2
 
-#define IMG_WIDTH 64
-#define IMG_HEIGHT 64
-#define IMG_RESULT_SIZE (IMG_WIDTH) * (IMG_HEIGHT)
+#define USE_MUL_APPROX
+#define MUL_APPROX_AMOUNT 2
 
 #include "image/data0.h"
 
+#define xstr(s) str(s)
+#define str(s) #s
+
+
+#ifdef USE_ADD_APPROX
 #define ADD_APPROX(arg1, arg2, amount) ({ \
   uint64_t op1=arg1, op2=arg2, rv1; \
-  asm("add.approx %0, %1, %2, "#amount "\n" : "=r"(rv1) : "r"(op1), "r"(op2)); \
+  asm("add.approx %0, %1, %2, "xstr(amount) "\n" : "=r"(rv1) : "r"(op1), "r"(op2)); \
   rv1;})
+#else
+#define ADD_APPROX(arg1, arg2, amount) ({ \
+    uint64_t rv1; \
+    rv1 = arg1 + arg2;\
+    rv1;})
+#endif 
 
+#ifdef USE_MUL_APPROX
+#define MUL_APPROX(arg1, arg2, amount) ({ \
+  uint64_t op1=arg1, op2=arg2, rv1; \
+  asm("mul.approx %0, %1, %2, "xstr(amount) "\n" : "=r"(rv1) : "r"(op1), "r"(op2)); \
+  rv1;})
+#else
+#define MUL_APPROX(arg1, arg2, amount) ({ \
+    uint64_t rv1; \
+    rv1 = arg1 * arg2;\
+    rv1;})
+#endif 
 
 uint64_t kernel[9] = {1, 3, 1,
                       3, 9, 3,
@@ -59,47 +78,47 @@ void gauss_alu(){
 
             image_data = image[(y - 1) * IMG_WIDTH + (x - 1)];
             kernel_data = kernel[0];
-            result  = image_data * kernel_data;
+            result  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
 
             image_data = image[(y - 1) * IMG_WIDTH + (x + 1)];
             kernel_data = kernel[1];
-            immediate  = image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y   ) * IMG_WIDTH + (x + 1)];
-            kernel_data = kernel[2];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            kernel_data = kernel[ADD_APPROX_AMOUNT];
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y   ) * IMG_WIDTH + (x - 1)];
             kernel_data = kernel[3];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y   ) * IMG_WIDTH + (x     )];
-            kernel_data = kernel[4];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            kernel_data = kernel[ADD_APPROX_AMOUNT];
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y   ) * IMG_WIDTH + (x + 1)];
             kernel_data = kernel[5];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y + 1) * IMG_WIDTH + (x - 1)];
             kernel_data = kernel[6];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y + 1) * IMG_WIDTH + (x    )];
             kernel_data = kernel[7];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y + 1) * IMG_WIDTH + (x + 1)];
             kernel_data = kernel[8];
-            result  += image_data * kernel_data;
-            result = ADD_APPROX(result, immediate, 2);
+            immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
+            result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             result /= 25;
             // print single result to uart

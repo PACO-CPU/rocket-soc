@@ -15,8 +15,9 @@ CFLAGS+= \
   -I$(RISCV)/include \
   -I$(RISCV)/riscv64-unknown-elf/include \
   -std=gnu99  -static -fno-common -fno-builtin-printf \
+  -msoft-float \
   -Wattributes \
-  -O3 -g3\
+  #-O3 -g3\
 #  -target riscv -mriscv=RV64IAMFD  
 
 LFLAGS+= \
@@ -56,7 +57,7 @@ main.bin: main
 	$(CROSS_COMPILE)objcopy -O binary main main.bin
 
 main.dump: main
-	$(CROSS_COMPILE)objdump -D main > main.dump
+	$(CROSS_COMPILE)objdump -S main > main.dump
 
 main.s: $(SRC) $(RAW_IMG_DATA)
 	$(GCC) $(CFLAGS) -S $(SRC) 
