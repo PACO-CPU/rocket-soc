@@ -69,7 +69,7 @@ elif args.raw:
     f.write("#define IMG_HEIGHT " + str(height) + "\n")
     f.write("uint32_t image[] = {\n")
     for v in data:
-        f.write(str(v[0]) + ",\n")
+        f.write(str(v) + ",\n")
     f.write("};")
 
     f.close()

@@ -10,12 +10,7 @@
 int main_();
 int main() { return main_(); }
 
-#define USE_ADD_APPROX
-#define ADD_APPROX_AMOUNT 2
-
-#define USE_MUL_APPROX
-#define MUL_APPROX_AMOUNT 2
-
+#include "approx_config.h"
 #include "image/data0.h"
 
 #define xstr(s) str(s)
@@ -46,9 +41,9 @@ int main() { return main_(); }
     rv1;})
 #endif 
 
-uint64_t kernel[9] = {1, 3, 1,
-                      3, 9, 3,
-                      1, 3, 1,};
+uint64_t kernel[9] = {100, 300, 100,
+                      300, 900, 300,
+                      100, 300, 100,};
 
 void write_raw_image_header()
 {
@@ -65,10 +60,10 @@ void write_raw_image_header()
 }
 
 void gauss_alu(){
-    int result;
-    int image_data;
-    int kernel_data;
-    int immediate;
+    uint64_t result;
+    uint64_t image_data;
+    uint64_t kernel_data;
+    uint64_t immediate;
     int r;
     char buf[128];
     int x, y, i;
@@ -86,7 +81,7 @@ void gauss_alu(){
             result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y   ) * IMG_WIDTH + (x + 1)];
-            kernel_data = kernel[ADD_APPROX_AMOUNT];
+            kernel_data = kernel[2];
             immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
             result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
@@ -96,7 +91,7 @@ void gauss_alu(){
             result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
             image_data = image[(y   ) * IMG_WIDTH + (x     )];
-            kernel_data = kernel[ADD_APPROX_AMOUNT];
+            kernel_data = kernel[4];
             immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
             result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
@@ -120,7 +115,7 @@ void gauss_alu(){
             immediate  = MUL_APPROX(image_data, kernel_data, MUL_APPROX_AMOUNT);
             result = ADD_APPROX(result, immediate, ADD_APPROX_AMOUNT);
 
-            result /= 25;
+            result /= 2500;
             // print single result to uart
             r=0;
             r+=wruint64(buf+r,result);

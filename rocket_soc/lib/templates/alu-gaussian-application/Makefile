@@ -17,6 +17,7 @@ CFLAGS+= \
   -std=gnu99  -static -fno-common -fno-builtin-printf \
   -msoft-float \
   -Wattributes \
+  -g3
   #-O3 -g3\
 #  -target riscv -mriscv=RV64IAMFD  
 
@@ -28,7 +29,7 @@ LFLAGS+= \
 
 TARGETS=main main.dump main.bin
 RAW_IMG_DATA=image/data0.h
-IMG_FILE=image/image01.png
+include image.mak
 
 # source files
 SRC=main.c  
