@@ -1,0 +1,1 @@
+#define MODE MODE_STATIC
