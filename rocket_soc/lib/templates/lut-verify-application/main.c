@@ -135,15 +135,13 @@ int main_()
         }
 
         uart_println("All tests sucessfull");
-        return -1;
+        uart_exit(0);
     } else {
         /* configuration failed */
         uart_println("Configuration failed.");
     }
 fail:
-    while(1){}
-
-    return 0;
+    uart_exit(1);
 }
 
 
