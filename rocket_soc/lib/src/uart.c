@@ -96,3 +96,19 @@ void uart_write_u8_hex(uint8_t v) {
   for(int i=8;i>=0;i-=4) UART_WRITE(hexdig[(v>>i)&0xf]);
 }
 
+void uart_write_int(int64_t v) {
+  uart_map *uart=(uart_map*)ADDR_NASTI_SLAVE_UART1;
+  char buf[20];
+  int n=0;
+  if (v<0) {
+    UART_WRITE('-');
+    v=-v;
+  }
+  do {
+    buf[n++]='0'+v%10;
+    v/=10;
+  } while (v!=0);
+  n--;
+  for(;n>=0;n--)
+    UART_WRITE(buf[n]);
+}
