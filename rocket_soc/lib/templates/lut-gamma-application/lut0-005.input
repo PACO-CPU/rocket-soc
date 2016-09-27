@@ -1,0 +1,23 @@
+name = "lut0"
+numPrimarySegments=6
+bounds = "(0,16777215)"
+segments = "uniform"
+approximation = "linear"
+
+%%
+
+target int -> int
+
+%%
+
+#include <math.h>
+
+int target(int a) {
+  double v;
+  int r;
+  v=(double)a/(double)(1uL<<24);
+  v= 1.0 * pow(v,0.05);
+  if (v>1) v=1; else if (v<0) v=0;
+  r=(int)(v*(double)(1uL<<24));
+  return r;
+}
