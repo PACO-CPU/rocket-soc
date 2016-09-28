@@ -34,6 +34,7 @@ LFLAGS+= \
 
 # LUT cores to be added to the program
 LUTS=lut0
+LIBFIXMATH=libfixmath/libfixmath.a
 
 TARGETS=main main.dump main.bin $(LUTS:=.dump)
 
@@ -51,7 +52,7 @@ lut-debug: $(LUTS:=.debug.pdf)
 run: main.bin
 	riscv-uart-flash -i main.bin -p $(UART) -w
 
-main: $(S_FILES)
+main: $(S_FILES) $(LIBFIXMATH)
 	$(CROSS_COMPILE)gcc $^ -o $@ $(LFLAGS)
 
 
@@ -79,6 +80,9 @@ lut-startup.s: $(LUT_ARCH)
 %.s:%.c 
 	$(CLANG) $(CFLAGS) -S $^ -o $@
 
+$(LIBFIXMATH):
+	@cd libfixmath/ && $(MAKE)
+
 %.debug.pdf:%.input
 	riscv-lut-compiler --arch $(LUT_ARCH) -g $^
 	gnuplot $*.o.gnuplot
@@ -89,4 +93,5 @@ lut-startup.s: $(LUT_ARCH)
 	riscv-lut-compiler --arch $(LUT_ARCH) -D $^ -o $@
 
 clean:
-	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUTS:=.lut) $(LUT_CONFIG_FILES) $(LUTS:=.c)
+	rm -f $(TARGETS) *.S *.o $(S_FILES) $(LUTS:=.lut) $(LUT_CONFIG_FILES) $(LUTS:=.c) 
+	@cd libfixmath && $(MAKE) clean
