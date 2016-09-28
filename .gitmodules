@@ -1,0 +1,3 @@
+[submodule "rocket_soc/rocket-lut"]
+	path = rocket_soc/rocket-lut
+	url = https://github.com/PACO-CPU/rocket-lut.git
